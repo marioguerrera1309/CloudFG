@@ -1,0 +1,1 @@
+print("Hello from Analitics main.py")
