@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj": {}
+    "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Client\\Client\\Client.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj": {
+    "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Client\\Client\\Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj",
+        "projectUniqueName": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Client\\Client\\Client.csproj",
         "projectName": "Client",
-        "projectPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj",
+        "projectPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Client\\Client\\Client.csproj",
         "packagesPath": "C:\\Users\\Utente\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\obj\\",
+        "outputPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Client\\Client\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Utente\\AppData\\Roaming\\NuGet\\NuGet.Config",
