@@ -10,6 +10,7 @@ namespace Client
     public partial class MainWindow : Window
     {
         // Riutilizziamo HttpClient per efficienza (Best Practice)
+        //prova visuallizzazione commit
         private static readonly HttpClient _httpClient = new HttpClient();
 
         public MainWindow() => InitializeComponent();
