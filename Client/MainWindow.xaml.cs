@@ -4,67 +4,44 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows;
-
-namespace Client
-{
-    public partial class MainWindow : Window
-    {
-        // Riutilizziamo HttpClient per efficienza (Best Practice)
-        //prova visuallizzazione commit
+namespace Client {
+    public partial class MainWindow : Window {
         private static readonly HttpClient _httpClient = new HttpClient();
-
         public MainWindow() => InitializeComponent();
-
-        private async void BtnSelect_Click(object sender, RoutedEventArgs e)
-        {
-            // 1. Selezione del file
+        private async void BtnSelect_Click(object sender, RoutedEventArgs e) {
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            if (openFileDialog.ShowDialog() == true)
-            {
+            if (openFileDialog.ShowDialog() == true) {
                 string filePath = openFileDialog.FileName;
+                //Assegna al label il nome del file selezionato
                 lblFileName.Text = Path.GetFileName(filePath);
-
                 await UploadFile(filePath);
             }
         }
-
-        private async Task UploadFile(string filePath)
-        {
-            // Reset Interfaccia
+        private async Task UploadFile(string filePath) {
             btnSelect.IsEnabled = false;
             uploadProgressBar.Visibility = Visibility.Visible;
-            uploadProgressBar.IsIndeterminate = true; // In attesa di risposta
+            uploadProgressBar.IsIndeterminate = true;
             lblStatus.Text = "Caricamento in corso...";
-
-            try
-            {
+            try {
                 using var form = new MultipartFormDataContent();
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 using var streamContent = new StreamContent(fileStream);
-
-                // Aggiungiamo il file con la chiave "file" (che Go dovrà leggere)
+                //Aggiunge il file al contenuto del form
                 form.Add(streamContent, "file", Path.GetFileName(filePath));
-
-                // Chiamata all'API di Go
                 var response = await _httpClient.PostAsync("http://localhost:8080/upload", form);
-
-                if (response.IsSuccessStatusCode)
-                {
+                if (response.IsSuccessStatusCode) {
                     lblStatus.Text = "Successo! Il processo Go ha ricevuto il file.";
                     lblStatus.Foreground = System.Windows.Media.Brushes.Green;
                 }
-                else
-                {
+                else {
                     lblStatus.Text = $"Errore Server: {response.StatusCode}";
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 MessageBox.Show($"Errore: {ex.Message}", "Errore di Connessione");
                 lblStatus.Text = "Caricamento fallito.";
             }
-            finally
-            {
+            finally {
                 btnSelect.IsEnabled = true;
                 uploadProgressBar.Visibility = Visibility.Hidden;
             }

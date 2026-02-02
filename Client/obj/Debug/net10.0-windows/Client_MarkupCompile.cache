@@ -1,5 +1,5 @@
 ﻿Client
-1.0.0.0
+
 
 winexe
 C#
@@ -12,9 +12,9 @@ TRACE;DEBUG;NET;NET10_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_O
 C:\Users\Utente\OneDrive - Università degli Studi di Catania\Desktop\Ingegneria Informatica\Magistrale\Advanced Programming Languages\Libgen\Client\App.xaml
 11407045341
 
-6-66453894
+41415393273
 206-796764840
 MainWindow.xaml;
 
-True
+False
 
