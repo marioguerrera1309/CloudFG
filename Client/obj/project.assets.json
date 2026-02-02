@@ -13,22 +13,19 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj",
+      "projectUniqueName": "C:\\Users\\Utente\\Desktop\\Libgen\\Client\\Client.csproj",
       "projectName": "Client",
-      "projectPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\Client.csproj",
+      "projectPath": "C:\\Users\\Utente\\Desktop\\Libgen\\Client\\Client.csproj",
       "packagesPath": "C:\\Users\\Utente\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Utente\\OneDrive - Università degli Studi di Catania\\Desktop\\Ingegneria Informatica\\Magistrale\\Advanced Programming Languages\\Libgen\\Client\\obj\\",
+      "outputPath": "C:\\Users\\Utente\\Desktop\\Libgen\\Client\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Utente\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Utente\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net10.0-windows"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
