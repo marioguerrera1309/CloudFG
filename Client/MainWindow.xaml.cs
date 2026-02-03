@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32;//libreria per aprire la finestra per selezionare il file
-using System;
 using System.IO;
 using System.Net.Http;
 using System.Windows;

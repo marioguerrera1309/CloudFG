@@ -3,8 +3,8 @@ namespace LibgenUI
 {
     public partial class UploadDetailsWindow : Window
     {
-        public string DocumentTitle { get; private set; }
-        public string DocumentAuthor { get; private set; }
+        public string DocumentTitle { get; private set; } = string.Empty;
+        public string DocumentAuthor { get; private set; } = string.Empty;
         public UploadDetailsWindow()
         {
             InitializeComponent();

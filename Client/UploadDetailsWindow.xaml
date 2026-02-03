@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:LibgenUI"
         mc:Ignorable="d"
         Title="Dettagli documento" Height="450" Width="800"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Icon="LibgenIcon.ico">
     <StackPanel Margin="15">
         <TextBlock Text="Titolo:"/>
         <TextBox Name="title" Margin="0,5,0,10"/>

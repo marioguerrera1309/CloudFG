@@ -20,7 +20,9 @@ namespace LibgenUI
         private void BtnResultClick(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
+            if(button == null) return;
             var libro = button.DataContext as Document;
+            if(libro == null) return;
             MessageBox.Show($"Hai scelto: {libro.Title}. Avvio download...");
         }
     }
