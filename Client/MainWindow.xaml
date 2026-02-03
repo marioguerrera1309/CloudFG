@@ -1,15 +1,27 @@
-﻿<Window x:Class="Client.MainWindow"
+﻿<Window x:Class="LibgenUI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Client"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <StackPanel Margin="20" VerticalAlignment="Center">
-        <TextBlock Name="lblFileName" Text="Nessun file selezionato" Margin="0,0,0,10" TextTrimming="CharacterEllipsis"/>
-        <Button Name="btnSelect" Content="Seleziona e Invia File" Click="BtnSelect_Click" Height="35" Margin="0,0,0,10"/>
-        <ProgressBar Name="uploadProgressBar" Height="15" Minimum="0" Maximum="100" Margin="0,0,0,5" Visibility="Hidden"/>
-        <TextBlock Name="lblStatus" Text="Pronto" Foreground="Gray" HorizontalAlignment="Center"/>
-    </StackPanel>
+        Title="LibgenUI" Height="450" Width="800"
+        Icon="LibgenIcon.ico">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0">
+            <TextBlock Name="lblTextSearch" Text="Ricerca documento" Margin="0,0,0,5" TextTrimming="CharacterEllipsis"/>
+            <TextBox Name="lblSearch" Height="30" VerticalContentAlignment="Center" Padding="5,0" 
+                     Text="Inserisci un titolo o un autore..." Foreground="Gray" GotFocus="RemoveText"/>
+            <Button Name="btnSearch" Content="Cerca documento" Click="BtnSearchClick" Height="35" Margin="0,10,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" VerticalAlignment="Center">
+            <TextBlock Name="lblFileName" Text="Nessun file selezionato" Margin="0,0,0,10" 
+                       TextTrimming="CharacterEllipsis" HorizontalAlignment="Center"/>
+            <Button Name="btnSend" Content="Seleziona e Invia File" Click="BtnSendClick" 
+                    Height="35" Margin="0,0,0,10" Width="300"/>
+            <ProgressBar Name="uploadProgressBar" Height="15" Minimum="0" Maximum="100" 
+                         Margin="0,0,0,5" Visibility="Hidden" Width="300"/>
+            <TextBlock Name="lblStatus" Text="Pronto" Foreground="Gray" HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
 </Window>

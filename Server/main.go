@@ -57,6 +57,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Errore nel salvataggio", http.StatusInternalServerError)
 		return
 	}
+	//con defer chiude il file di destinazione alla fine della funzione
 	defer dst.Close()
 	//Copia il contenuto del file caricato nel file di destinazione a blocchi di 32KB
 	var buffer = make([]byte, 32*1024) //Buffer di 32KB

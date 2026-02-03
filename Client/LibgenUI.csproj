@@ -8,4 +8,12 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="LibgenIcon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="LibgenIcon.ico" />
+  </ItemGroup>
+
 </Project>
