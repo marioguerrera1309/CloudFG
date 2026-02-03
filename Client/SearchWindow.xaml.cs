@@ -1,5 +1,8 @@
-﻿using System.Windows;
+﻿using System.Net.Http;
+using System.Windows;
 using System.Windows.Controls;
+using System.Diagnostics;
+using System.IO;
 namespace LibgenUI
 {
     public partial class SearchWindow : Window
@@ -12,18 +15,58 @@ namespace LibgenUI
         }
         private async void LoadResult(string query)
         {
-            var listaEsempio = new List<Document> {
-                new Document("6846e4a1f2199721c8a318dabaf730d12886f06a94c06bf17f290b51dacdef29", "prova", "prova", 389614, "./uploads\\1374076.jpg")
-            };
-            lstResults.ItemsSource = listaEsempio;
+            try {
+                HttpClient client = new HttpClient();
+                // Chiamata al server Go passando la query nell'URL
+                var response = await client.GetAsync($"http://localhost:8080/search?query={query}");
+        
+                if (response.IsSuccessStatusCode) {
+                    string json = await response.Content.ReadAsStringAsync();
+                    // Trasforma il JSON ricevuto dal server in una lista di oggetti Document
+                    var risultati = System.Text.Json.JsonSerializer.Deserialize<List<Document>>(json, 
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            
+                lstResults.ItemsSource = risultati;
+            }
+            } catch (Exception ex) {
+                MessageBox.Show("Errore durante la ricerca: " + ex.Message);
+            }
         }
-        private void BtnResultClick(object sender, RoutedEventArgs e)
+        private async void BtnResultClick(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
             if(button == null) return;
             var libro = button.DataContext as Document;
             if(libro == null) return;
             MessageBox.Show($"Hai scelto: {libro.Title}. Avvio download...");
+
+            try {
+                HttpClient client = new HttpClient();
+                // Chiediamo il file al server usando l'hash
+                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}");
+
+                if (response.IsSuccessStatusCode) {
+                    // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
+                    string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
+                    Directory.CreateDirectory(tempFolder);
+            
+                    
+                    string fullSavePath = Path.Combine(tempFolder, libro.Title);
+
+                    // Salviamo il file su disco
+                    var fileBytes = await response.Content.ReadAsByteArrayAsync();
+                    await File.WriteAllBytesAsync(fullSavePath, fileBytes);
+
+                    //apriamo il file con il programma predefinito (Word, PDF Reader, ecc.)
+                    var psi = new ProcessStartInfo {
+                    FileName = fullSavePath,
+                    UseShellExecute = true // Fondamentale per aprire il file e non un eseguibile
+                };
+                Process.Start(psi);
+            }
+            } catch (Exception ex) {
+                MessageBox.Show($"Errore nel download: {ex.Message}");
+            }
         }
     }
 }

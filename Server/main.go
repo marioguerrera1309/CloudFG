@@ -1,14 +1,20 @@
 package main
+
 import (
 	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	_"modernc.org/sqlite"
+	"time" // libreria aggiunta per gestire i timestamp di registrazione dei file
+
+	_ "modernc.org/sqlite"
 )
+
 var db *sql.DB
+
 func initDatabase() {
 	var err error
 	// Apre (o crea) il file libgen.db. Nota il nome del driver "sqlite"
@@ -22,6 +28,7 @@ func initDatabase() {
         hash TEXT PRIMARY KEY,
         title TEXT,
         author TEXT,
+		upload_time DATETIME,
         size_bytes INTEGER,
         file_path TEXT
     );`
@@ -96,8 +103,10 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "File già esistente nel database", http.StatusConflict) // Codice 409
 		return
 	}
-	_, err = db.Exec("INSERT INTO files (hash, title, author, size_bytes, file_path) VALUES (?, ?, ?, ?, ?)",
-		fileHash, title, author, written, fullPath)
+
+	timestamp := time.Now().Format("2006-01-02 15:04:05")
+	_, err = db.Exec("INSERT INTO files (hash, title, author, upload_time, size_bytes, file_path) VALUES (?, ?, ?, ?, ?, ?)",
+		fileHash, title, author, timestamp, written, fullPath)
 	if err != nil {
 		http.Error(w, "Errore registrazione DB", http.StatusInternalServerError)
 		return
@@ -111,11 +120,62 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 }
+
+// struttura da definire per l'invio del json
+type FileRecord struct {
+	Hash      string `json:"hash"`
+	Title     string `json:"title"`
+	Author    string `json:"author"`
+	SizeBytes int64  `json:"size_bytes"`
+	FilePath  string `json:"file_path"`
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	queryText := r.URL.Query().Get("query")
+
+	rows, err := db.Query("SELECT hash, title, author, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
+		"%"+queryText+"%", "%"+queryText+"%")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var results []FileRecord
+	for rows.Next() {
+		var f FileRecord
+		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.SizeBytes, &f.FilePath); err != nil {
+			continue
+		}
+		results = append(results, f)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	fileHash := r.URL.Query().Get("hash")
+
+	var filePath string
+	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ?", fileHash).Scan(&filePath)
+	if err != nil {
+		http.Error(w, "File non trovato", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
+	http.ServeFile(w, r, filePath)
+}
+
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/download", downloadHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Errore nell'avvio del server: %s\n", err)
 	}
+
 }
