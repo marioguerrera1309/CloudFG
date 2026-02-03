@@ -46,17 +46,17 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			written += int64(x)
 		}
-		if readErr.Error() == "EOF" {
-			break
-		}
 		if readErr != nil {
-			http.Error(w, "Errore in lettura", 500)
-			return
+        	if readErr.Error() == "EOF" {
+            	break // Uscita pulita dal ciclo
+        	}
+        	http.Error(w, "Errore in lettura", 500)
+        	return
 		}
 		i++;
 	}
 	//fmt.Printf("Copiati %d byte\n", written)
-	//fmt.Printf("Salvato documento: %s (%d bytes su %d bytes)\n", fullPath, written, handler.Size)
+	fmt.Printf("Salvato documento: %s (%d bytes su %d bytes)\n", fullPath, written, handler.Size)
 	go startPythonAnalysis(fullPath)
 	//fmt.Fprintf(w, "File caricato correttamente: %s", handler.Filename)
 }
