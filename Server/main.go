@@ -1,8 +1,6 @@
 package main
 import (
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
 )
@@ -48,7 +46,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			written += int64(x)
 		}
-		if readErr == io.EOF {
+		if readErr.Error() == "EOF" {
 			break
 		}
 		if readErr != nil {
@@ -69,6 +67,6 @@ func main() {
 	http.HandleFunc("/upload", uploadHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
+		fmt.Printf("Errore nell'avvio del server: %s\n", err)
 	}
 }
