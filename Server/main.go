@@ -1,9 +1,44 @@
 package main
+
 import (
+	"crypto/sha256"
+	"database/sql"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"os"
+
+	_ "modernc.org/sqlite"
 )
+
+var db *sql.DB
+
+func initDatabase() {
+	var err error
+	// Apre (o crea) il file libgen.db. Nota il nome del driver "sqlite"
+	db, err = sql.Open("sqlite", "./libgen.db")
+	if err != nil {
+		log.Fatal("Errore apertura DB:", err)
+	}
+
+	// Creazione della tabella per i file e i loro metadati
+	statement := `
+    CREATE TABLE IF NOT EXISTS files (
+        hash TEXT PRIMARY KEY,
+        title TEXT,
+        author TEXT,
+        size_bytes INTEGER,
+        file_path TEXT
+    );`
+
+	_, err = db.Exec(statement)
+	if err != nil {
+		log.Fatal("Errore creazione tabella:", err)
+	}
+	fmt.Println("Database SQLite (Pure Go) pronto!")
+}
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	//Limita il file a 10MB
 	//r.ParseMultipartForm(10 << 20)
@@ -14,6 +49,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		http.Error(w, "Errore calcolo Hash", http.StatusInternalServerError)
+		return
+	}
+	fileHash := fmt.Sprintf("%x", hasher.Sum(nil))
+
+	var exists bool
+	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM files WHERE hash=?)", fileHash).Scan(&exists)
+	if exists {
+		fmt.Printf("Duplicato rilevato! Hash: %s\n", fileHash)
+		http.Error(w, "File già esistente nel database", http.StatusConflict) // Codice 409
+		return
+	}
+
+	file.Seek(0, 0)
+
 	//fmt.Printf("Ricevuto documento: %s (%d bytes)\n", handler.Filename, handler.Size)
 	dstPath := "./uploads"
 	//Crea la cartella di destinazione se non esiste
@@ -31,10 +84,10 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer dst.Close()
 	//Copia il contenuto del file caricato nel file di destinazione a blocchi di 32KB
-	buffer := make([]byte, 32000) 
+	buffer := make([]byte, 32000)
 	var written int64
 	var i int
-	i=0;
+	i = 0
 	for {
 		n, readErr := file.Read(buffer)
 		if n > 0 {
@@ -47,16 +100,31 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			written += int64(x)
 		}
 		if readErr != nil {
-        	if readErr.Error() == "EOF" {
-            	break // Uscita pulita dal ciclo
-        	}
-        	http.Error(w, "Errore in lettura", 500)
-        	return
+			if readErr.Error() == "EOF" {
+				break // Uscita pulita dal ciclo
+			}
+			http.Error(w, "Errore in lettura", 500)
+			return
 		}
-		i++;
+		i++
 	}
 	//fmt.Printf("Copiati %d byte\n", written)
-	fmt.Printf("Salvato documento: %s (%d bytes su %d bytes)\n", fullPath, written, handler.Size)
+
+	title := r.FormValue("title")
+	author := r.FormValue("author")
+
+	_, err = db.Exec("INSERT INTO files (hash, title, author, size_bytes, file_path) VALUES (?, ?, ?, ?, ?)",
+		fileHash, title, author, written, fullPath)
+
+	if err != nil {
+		http.Error(w, "Errore registrazione DB", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Salvato: %s | Hash: %s | Bytes: %d\n", title, fileHash, written)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "File caricato con successo!")
+
 	go startPythonAnalysis(fullPath)
 	//fmt.Fprintf(w, "File caricato correttamente: %s", handler.Filename)
 }
@@ -64,6 +132,7 @@ func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 }
 func main() {
+	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

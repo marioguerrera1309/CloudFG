@@ -24,17 +24,28 @@ namespace Client {
             lblStatus.Text = "Caricamento in corso...";
             try {
                 using var form = new MultipartFormDataContent();
-                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                var fileInfo = new FileInfo(filePath);
+                string fileName = Path.GetFileName(filePath);
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using var streamContent = new StreamContent(fileStream);
                 //Aggiunge il file al contenuto del form
                 form.Add(streamContent, "file", Path.GetFileName(filePath));
+                form.Add(new StringContent(fileName), "title");
+                form.Add(new StringContent("Autore Default"), "author"); // Potrai collegarlo a una TextBox
+                form.Add(new StringContent(filePath), "original_path");
+                form.Add(new StringContent(fileInfo.Length.ToString()), "size");
                 var response = await _httpClient.PostAsync("http://localhost:8080/upload", form);
                 if (response.IsSuccessStatusCode) {
                     lblStatus.Text = "Successo! Il processo Go ha ricevuto il file.";
                     lblStatus.Foreground = System.Windows.Media.Brushes.Green;
                 }
+                else if (response.StatusCode == System.Net.HttpStatusCode.Conflict) {
+                    lblStatus.Text = "Il file esiste già nel server (Hash duplicato).";
+                    lblStatus.Foreground = System.Windows.Media.Brushes.Orange;
+                }
                 else {
                     lblStatus.Text = $"Errore Server: {response.StatusCode}";
+                    lblStatus.Foreground = System.Windows.Media.Brushes.Red;
                 }
             }
             catch (Exception ex) {
