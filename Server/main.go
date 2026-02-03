@@ -29,13 +29,15 @@ func initDatabase() {
 	if err != nil {
 		log.Fatal("Errore creazione tabella:", err)
 	}
-	fmt.Println("Database SQLite (Pure Go) pronto!")
+	fmt.Println("Database pronto!")
 }
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	//Limita il file a 10MB
 	//r.ParseMultipartForm(10 << 20)
 	//Recupera il documento dal form con la chiave "file"
 	file, handler, err := r.FormFile("file")
+	title := r.FormValue("title")
+	author := r.FormValue("author")
 	if err != nil {
 		http.Error(w, "Errore nel recupero del documento", http.StatusBadRequest)
 		return
@@ -94,15 +96,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "File già esistente nel database", http.StatusConflict) // Codice 409
 		return
 	}
-	title := r.FormValue("title")
-	author := r.FormValue("author")
 	_, err = db.Exec("INSERT INTO files (hash, title, author, size_bytes, file_path) VALUES (?, ?, ?, ?, ?)",
 		fileHash, title, author, written, fullPath)
 	if err != nil {
 		http.Error(w, "Errore registrazione DB", http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("Salvato: %s | Hash: %s | Bytes: %d\n", title, fileHash, written)
+	fmt.Printf("Salvato: %s | Author: %s | Hash: %s | Bytes: %d | Path: %s \n", title, author, fileHash, written, fullPath)
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "File caricato con successo!")
 	go startPythonAnalysis(fullPath)
