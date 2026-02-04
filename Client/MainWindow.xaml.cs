@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;//libreria per aprire la finestra per selezionare il file
 using System.IO;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Windows;
 namespace LibgenUI
 {
@@ -8,10 +9,13 @@ namespace LibgenUI
     {
         private static readonly HttpClient client = new HttpClient();
         private Window last;
-        public MainWindow()
+        private readonly string username;
+        public MainWindow(string username)
         {
             InitializeComponent();
             last = this;
+            this.username = username;
+            lblWelcome.Text = "Benvenuto, " + username;
         }
         private async void BtnSendClick(object sender, RoutedEventArgs e)
         {
@@ -43,6 +47,7 @@ namespace LibgenUI
                 //Aggiunge il file al contenuto del form
                 form.Add(new StringContent(title), "title");
                 form.Add(new StringContent(author), "author");
+                form.Add(new StringContent(username), "user");
                 form.Add(streamContent, "file", Path.GetFileName(filePath));
                 var response = await client.PostAsync("http://localhost:8080/upload", form);
                 if (response.IsSuccessStatusCode) {
@@ -77,7 +82,7 @@ namespace LibgenUI
         private void BtnSearchClick(object sender, RoutedEventArgs e)
         {
             string query = lblSearch.Text;
-            SearchWindow searchWin = new SearchWindow(query);
+            SearchWindow searchWin = new SearchWindow(query, username);
             double offset = 40;//spostamento della finestra rispetto alla finestra principale
             double nextLeft = last.Left + offset;
             // Se superiamo la larghezza dello schermo ricominciamo da sinistra
@@ -97,6 +102,19 @@ namespace LibgenUI
         private void WindowClosed(object sender, EventArgs e)
         {
             Application.Current.Shutdown();
+        }
+        private void BtnLogoutClick(object sender, RoutedEventArgs e)
+        {
+            // Rimuove il token salvato
+            LibgenUI.Properties.Settings.Default.UserToken = string.Empty;
+            LibgenUI.Properties.Settings.Default.Save();
+            // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
+            this.Closed -= WindowClosed;
+            // Apre la LoginWindow
+            LoginWindow loginWin = new LoginWindow();
+            loginWin.Show();
+            // Chiude la MainWindow
+            this.Close();
         }
     }
 }

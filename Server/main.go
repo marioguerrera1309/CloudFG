@@ -1,4 +1,5 @@
 package main
+
 import (
 	"crypto/sha256"
 	"database/sql"
@@ -12,6 +13,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 var db *sql.DB
+type AuthRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 func initDatabase() {
 	var err error
 	// Apre (o crea) il file libgen.db. Nota il nome del driver "sqlite"
@@ -22,13 +27,25 @@ func initDatabase() {
 	// Creazione della tabella per i file e i loro metadati
 	statement := `
     CREATE TABLE IF NOT EXISTS files (
-        hash TEXT PRIMARY KEY,
+        hash TEXT,
         title TEXT,
         author TEXT,
 		upload_time DATETIME,
         size_bytes INTEGER,
-        file_path TEXT
+        file_path TEXT,
+		user TEXT,
+		PRIMARY KEY (hash, user)
     );`
+	_, err = db.Exec(statement)
+	if err != nil {
+		log.Fatal("Errore creazione tabella:", err)
+	}
+	// Creazione della tabella per gli utenti
+	statement = `
+	CREATE TABLE IF NOT EXISTS users (
+		username TEXT PRIMARY KEY,
+		password TEXT
+	);`
 	_, err = db.Exec(statement)
 	if err != nil {
 		log.Fatal("Errore creazione tabella:", err)
@@ -42,6 +59,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("file")
 	title := r.FormValue("title")
 	author := r.FormValue("author")
+	user := r.FormValue("user")
 	if err != nil {
 		http.Error(w, "Errore nel recupero del documento", http.StatusBadRequest)
 		return
@@ -115,7 +133,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("Copiati %d byte\n", written)
 	fileHash := fmt.Sprintf("%x", hasher.Sum(nil))
 	var exists bool
-	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM files WHERE hash=?)", fileHash).Scan(&exists)
+	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM files WHERE hash=? AND user=?)", fileHash, user).Scan(&exists)
 	if exists {
 		fmt.Printf("Duplicato rilevato! Hash: %s\n", fileHash)
 		http.Error(w, "File già esistente nel database", http.StatusConflict) // Codice 409
@@ -125,8 +143,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	_, err = db.Exec("INSERT INTO files (hash, title, author, upload_time, size_bytes, file_path) VALUES (?, ?, ?, ?, ?, ?)",
-		fileHash, title, author, timestamp, written, fullPath)
+	_, err = db.Exec("INSERT INTO files (hash, title, author, upload_time, size_bytes, file_path, user) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		fileHash, title, author, timestamp, written, fullPath, user)
 	if err != nil {
 		http.Error(w, "Errore registrazione DB", http.StatusInternalServerError)
 		return
@@ -148,10 +166,13 @@ type FileRecord struct {
 	Date      string `json:"date"`
 	SizeBytes int64  `json:"size_bytes"`
 	FilePath  string `json:"file_path"`
+	User      string `json:"user"`
 }
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
-	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
+	user := r.URL.Query().Get("user")
+	// Esegue la query sul database
+	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path, user FROM files WHERE user==? AND (title LIKE ? OR author LIKE ?)", user,
 		"%"+queryText+"%", "%"+queryText+"%")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -161,7 +182,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	var results []FileRecord
 	for rows.Next() {
 		var f FileRecord
-		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.Date, &f.SizeBytes, &f.FilePath); err != nil {
+		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.Date, &f.SizeBytes, &f.FilePath, &f.User); err != nil {
 			continue
 		}
 		results = append(results, f)
@@ -171,8 +192,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
+	user := r.URL.Query().Get("user")
 	var filePath string
-	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ?", fileHash).Scan(&filePath)
+	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? AND user = ?", fileHash, user).Scan(&filePath)
 	if err != nil {
 		http.Error(w, "File non trovato", http.StatusNotFound)
 		return
@@ -182,37 +204,72 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
-
 	fileHash := r.URL.Query().Get("hash")
-
+	user := r.URL.Query().Get("user")
 	var filePath string
 	// si recupera il percorso per cancellare il file anche in memoria
-	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ?", fileHash).Scan(&filePath)
+	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? AND user = ?", fileHash, user).Scan(&filePath)
 	if err != nil {
 		http.Error(w, "File non trovato", http.StatusNotFound)
 		return
 	}
-
 	// Eliminazione del record nel DB
-	_, err = db.Exec("DELETE FROM files WHERE hash = ?", fileHash)
+	_, err = db.Exec("DELETE FROM files WHERE hash = ? AND user = ?", fileHash, user)
 	if err != nil {
 		http.Error(w, "Errore eliminazione DB", http.StatusInternalServerError)
 		return
 	}
-
-	// Eliminazione da upload
+	// Eliminazione da /uploads
 	os.Remove(filePath)
-
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "File eliminato con successo")
 }
-
+//Prende in input una stringa e restituisce il suo hash SHA256 come stringa esadecimale
+func hashString(input string) string {
+    h := sha256.New()
+    h.Write([]byte(input))
+    return fmt.Sprintf("%x", h.Sum(nil))
+}
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	var req AuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "JSON non valido", http.StatusBadRequest)
+		return
+	}
+	_, err := db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", req.Username, hashString(req.Password))
+	if err != nil {
+		http.Error(w, "Username già esistente", http.StatusConflict)
+		return
+	}
+	// Dopo la registrazione viene generato il token di accesso
+	token := fmt.Sprintf("%s-%d", req.Username, time.Now().Unix())
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprint(w, token)
+}
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	var req AuthRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "JSON non valido", http.StatusBadRequest)
+		return
+	}
+	var storedPassword string
+	err := db.QueryRow("SELECT password FROM users WHERE username = ?", req.Username).Scan(&storedPassword)
+	if err != nil || storedPassword != hashString(req.Password) {
+		http.Error(w, "Credenziali non valide", http.StatusUnauthorized)
+		return
+	}
+	// Login riuscito: restituiamo il cookie 
+	token := fmt.Sprintf("%s-%d", req.Username, time.Now().Unix())
+	fmt.Fprint(w, token)
+}
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/search", searchHandler)
 	http.HandleFunc("/download", downloadHandler)
 	http.HandleFunc("/delete", deleteHandler)
+	http.HandleFunc("/register", registerHandler)
+	http.HandleFunc("/login", loginHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Errore nell'avvio del server: %s\n", err)

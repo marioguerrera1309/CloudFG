@@ -7,9 +7,11 @@ namespace LibgenUI
 {
     public partial class SearchWindow : Window
     {
-        public SearchWindow(string query)
+        private readonly string username;
+        public SearchWindow(string query, string username)
         {
             InitializeComponent();
+            this.username = username;
             this.Title = "Risultati per: " + query;
             LoadResult(query);
         }
@@ -18,7 +20,7 @@ namespace LibgenUI
             try {
                 HttpClient client = new HttpClient();
                 // Chiamata al server Go passando la query nell'URL
-                var response = await client.GetAsync($"http://localhost:8080/search?query={query}");
+                var response = await client.GetAsync($"http://localhost:8080/search?query={query}&user={username}");
                 if (response.IsSuccessStatusCode) {
                     string json = await response.Content.ReadAsStringAsync();
                     // Trasforma il JSON ricevuto dal server in una lista di oggetti Document
@@ -39,7 +41,7 @@ namespace LibgenUI
             try {
                 HttpClient client = new HttpClient();
                 // Chiediamo il file al server usando l'hash
-                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}");
+                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}&user={username}");
                 if (response.IsSuccessStatusCode) {
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
                     string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
@@ -66,14 +68,12 @@ namespace LibgenUI
             var button = sender as Button;
             var libro = button?.DataContext as Document;
             if (libro == null) return;
-
             var conferma = MessageBox.Show($"Sei sicuro di voler eliminare '{libro.Title}'?", "Conferma", MessageBoxButton.YesNo);
             if (conferma == MessageBoxResult.Yes)
             {
                 try {
                     HttpClient client = new HttpClient();
-                    var response = await client.DeleteAsync($"http://localhost:8080/delete?hash={libro.Hash}");
-
+                    var response = await client.DeleteAsync($"http://localhost:8080/delete?hash={libro.Hash}&user={username}");
                     if (response.IsSuccessStatusCode) {
                     MessageBox.Show("Eliminato!");
                     //ricarica la ricerca per aggiornare la lista
