@@ -71,7 +71,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	counter := 1
 	for {
-		_, err := os.Stat(fullPath);
+		_, err := os.Stat(fullPath)
 		if os.IsNotExist(err) {
 			// Il file non esiste usciamo dal ciclo
 			break
@@ -143,6 +143,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 }
+
 // struttura da definire per l'invio del json
 type FileRecord struct {
 	Hash      string `json:"hash"`
@@ -152,6 +153,7 @@ type FileRecord struct {
 	SizeBytes int64  `json:"size_bytes"`
 	FilePath  string `json:"file_path"`
 }
+
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
 	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
@@ -183,11 +185,39 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
 	http.ServeFile(w, r, filePath)
 }
+
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+
+	fileHash := r.URL.Query().Get("hash")
+
+	var filePath string
+	// si recupera il percorso per cancellare il file anche in memoria
+	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ?", fileHash).Scan(&filePath)
+	if err != nil {
+		http.Error(w, "File non trovato", http.StatusNotFound)
+		return
+	}
+
+	// Eliminazione del record nel DB
+	_, err = db.Exec("DELETE FROM files WHERE hash = ?", fileHash)
+	if err != nil {
+		http.Error(w, "Errore eliminazione DB", http.StatusInternalServerError)
+		return
+	}
+
+	// Eliminazione da upload
+	os.Remove(filePath)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "File eliminato con successo")
+}
+
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/search", searchHandler)
 	http.HandleFunc("/download", downloadHandler)
+	http.HandleFunc("/delete", deleteHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Errore nell'avvio del server: %s\n", err)

@@ -44,7 +44,9 @@ namespace LibgenUI
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
                     string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
                     Directory.CreateDirectory(tempFolder);
-                    string fullSavePath = Path.Combine(tempFolder, libro.Title);
+                    // Se Title è null, usa l'Hash o una stringa generica come nome file
+                    string fileName = libro.Title ?? libro.Hash ?? "documento_senza_nome";
+                    string fullSavePath = Path.Combine(tempFolder, fileName);
                     // Salviamo il file su disco
                     var fileBytes = await response.Content.ReadAsByteArrayAsync();
                     await File.WriteAllBytesAsync(fullSavePath, fileBytes);
@@ -59,5 +61,30 @@ namespace LibgenUI
                 MessageBox.Show($"Errore nel download: {ex.Message}");
             }
         }
+        private async void BtnDeleteResultClick(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var libro = button?.DataContext as Document;
+            if (libro == null) return;
+
+            var conferma = MessageBox.Show($"Sei sicuro di voler eliminare '{libro.Title}'?", "Conferma", MessageBoxButton.YesNo);
+            if (conferma == MessageBoxResult.Yes)
+            {
+                try {
+                    HttpClient client = new HttpClient();
+                    var response = await client.DeleteAsync($"http://localhost:8080/delete?hash={libro.Hash}");
+
+                    if (response.IsSuccessStatusCode) {
+                    MessageBox.Show("Eliminato!");
+                    //ricarica la ricerca per aggiornare la lista
+                    LoadResult(""); 
+                }
+                } catch (Exception ex) {
+                    MessageBox.Show($"Errore: {ex.Message}");
+                }
+            }
+        }
+
+
     }
 }
