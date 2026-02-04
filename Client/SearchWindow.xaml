@@ -18,6 +18,8 @@
                             <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
                             <TextBlock Text=" - "/>
                             <TextBlock Text="{Binding Author}" FontStyle="Italic"/>
+                            <TextBlock Text=" - "/>
+                            <TextBlock Text="{Binding Date}" FontStyle="Italic"/>
                         </StackPanel>
                     </Button>
                 </DataTemplate>

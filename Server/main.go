@@ -60,6 +60,27 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	string(os.PathSeparator) gestisce il separatore di percorso in base al sistema operativo
 	"/" su Linux e "\" su Windows */
 	fullPath := dstPath + string(os.PathSeparator) + handler.Filename
+	filename := handler.Filename
+	extension := ""
+	for i := len(filename) - 1; i >= 0 && !os.IsPathSeparator(filename[i]); i-- {
+		if filename[i] == '.' {
+			extension = filename[i:]
+			filename = filename[:i]
+			break
+		}
+	}
+	counter := 1
+	for {
+		_, err := os.Stat(fullPath);
+		if os.IsNotExist(err) {
+			// Il file non esiste usciamo dal ciclo
+			break
+		}
+		// Se esiste, generiamo un nuovo nome: nome(1).ext, nome(2).ext, ecc.
+		newFilename := fmt.Sprintf("%s(%d)%s", filename, counter, extension)
+		fullPath = dstPath + string(os.PathSeparator) + newFilename
+		counter++
+	}
 	//Crea il file nella cartella di destinazione
 	dst, err := os.Create(fullPath)
 	if err != nil {
@@ -101,6 +122,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if exists {
 		fmt.Printf("Duplicato rilevato! Hash: %s\n", fileHash)
 		http.Error(w, "File già esistente nel database", http.StatusConflict) // Codice 409
+		dst.Close()
+		os.Remove(fullPath)
 		return
 	}
 
@@ -120,44 +143,37 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 }
-
 // struttura da definire per l'invio del json
 type FileRecord struct {
 	Hash      string `json:"hash"`
 	Title     string `json:"title"`
 	Author    string `json:"author"`
+	Date      string `json:"date"`
 	SizeBytes int64  `json:"size_bytes"`
 	FilePath  string `json:"file_path"`
 }
-
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
-
-	rows, err := db.Query("SELECT hash, title, author, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
+	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
 		"%"+queryText+"%", "%"+queryText+"%")
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
-
 	var results []FileRecord
 	for rows.Next() {
 		var f FileRecord
-		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.SizeBytes, &f.FilePath); err != nil {
+		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.Date, &f.SizeBytes, &f.FilePath); err != nil {
 			continue
 		}
 		results = append(results, f)
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
-
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
-
 	var filePath string
 	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ?", fileHash).Scan(&filePath)
 	if err != nil {
@@ -167,7 +183,6 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
 	http.ServeFile(w, r, filePath)
 }
-
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
@@ -177,5 +192,4 @@ func main() {
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Errore nell'avvio del server: %s\n", err)
 	}
-
 }
