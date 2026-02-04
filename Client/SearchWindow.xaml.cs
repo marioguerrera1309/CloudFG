@@ -25,7 +25,20 @@ namespace LibgenUI
                     string json = await response.Content.ReadAsStringAsync();
                     // Trasforma il JSON ricevuto dal server in una lista di oggetti Document
                     var risultati = System.Text.Json.JsonSerializer.Deserialize<List<Document>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    lstResults.ItemsSource = risultati;
+                    if (risultati != null)
+                    {
+                        foreach (var libro in risultati)
+                        {
+                            // Se l'utente del file nel DB è lo stesso che ha fatto il login
+                            if (libro.User == username) {
+                                libro.DeleteButtonVisibility = Visibility.Visible;
+                            }
+                            else {
+                                libro.DeleteButtonVisibility = Visibility.Collapsed;
+                            }
+                        }
+                        lstResults.ItemsSource = risultati;
+                    }
                 }
             } catch (Exception ex) {
                 MessageBox.Show("Errore durante la ricerca: " + ex.Message);
@@ -41,7 +54,7 @@ namespace LibgenUI
             try {
                 HttpClient client = new HttpClient();
                 // Chiediamo il file al server usando l'hash
-                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}&user={username}");
+                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}");
                 if (response.IsSuccessStatusCode) {
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
                     string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");

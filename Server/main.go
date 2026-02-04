@@ -170,9 +170,9 @@ type FileRecord struct {
 }
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
-	user := r.URL.Query().Get("user")
+	//user := r.URL.Query().Get("user")
 	// Esegue la query sul database
-	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path, user FROM files WHERE user==? AND (title LIKE ? OR author LIKE ?)", user,
+	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path, user FROM files WHERE (title LIKE ? OR author LIKE ?)",
 		"%"+queryText+"%", "%"+queryText+"%")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -192,9 +192,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
-	user := r.URL.Query().Get("user")
+	//user := r.URL.Query().Get("user")
 	var filePath string
-	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? AND user = ?", fileHash, user).Scan(&filePath)
+	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? LIMIT 1", fileHash).Scan(&filePath)
 	if err != nil {
 		http.Error(w, "File non trovato", http.StatusNotFound)
 		return
@@ -202,7 +202,6 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
 	http.ServeFile(w, r, filePath)
 }
-
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
 	user := r.URL.Query().Get("user")

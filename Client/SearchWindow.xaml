@@ -29,7 +29,7 @@
                             </StackPanel>
                             <TextBlock Grid.Column="2" Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray"/>
                             <Button Grid.Column="3" Content="Apri" Click="BtnResultClick" Width="60" Margin="5,0"/>
-                            <Button Grid.Column="4" Content="Elimina" Click="BtnDeleteResultClick" Width="60" Background="Salmon"/>
+                            <Button Grid.Column="4" Content="Elimina" Click="BtnDeleteResultClick" Width="60" Background="Salmon" Visibility="{Binding DeleteButtonVisibility}"/>
                         </Grid>
                     </Border>
                 </DataTemplate>
