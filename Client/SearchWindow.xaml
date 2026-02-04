@@ -9,20 +9,29 @@
         WindowStartupLocation="Manual"
         Icon="LibgenIcon.ico">
     <ScrollViewer Margin="10">
-        <ItemsControl Name="lstResults">
+        <ItemsControl Name="lstResults" HorizontalContentAlignment="Stretch">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📖 "/>
-                        <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
-                        <TextBlock Text=" - "/>
-                        <TextBlock Text="{Binding Author}" FontStyle="Italic"/>
-                        <TextBlock Text=" - "/>
-                        <TextBlock Text="{Binding Date}" FontStyle="Italic"/>
-                        <Button Content="Apri" Click="BtnResultClick" Width="60" Margin="5,0"/>
-                
-                        <Button Content="Elimina" Click="BtnDeleteResultClick" Width="60" Background="Salmon"/>
-                    </StackPanel>
+                    <Border BorderBrush="#EEE" BorderThickness="0,0,0,1" Padding="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="📖 " VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                <TextBlock Text=" - "/>
+                                <TextBlock Text="{Binding Author}" FontStyle="Italic"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding Date}" Margin="10,0" VerticalAlignment="Center" Foreground="Gray"/>
+                            <Button Grid.Column="3" Content="Apri" Click="BtnResultClick" Width="60" Margin="5,0"/>
+                            <Button Grid.Column="4" Content="Elimina" Click="BtnDeleteResultClick" Width="60" Background="Salmon"/>
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

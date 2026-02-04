@@ -4,7 +4,6 @@
              xmlns:local="clr-namespace:Client"
              StartupUri="MainWindow.xaml"
              ShutdownMode="OnLastWindowClose">
-    <Application.Resources>
-         
+    <Application.Resources>  
     </Application.Resources>
 </Application>

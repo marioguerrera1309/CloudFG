@@ -1,5 +1,4 @@
 package main
-
 import (
 	"crypto/sha256"
 	"database/sql"
@@ -12,9 +11,7 @@ import (
 
 	_ "modernc.org/sqlite"
 )
-
 var db *sql.DB
-
 func initDatabase() {
 	var err error
 	// Apre (o crea) il file libgen.db. Nota il nome del driver "sqlite"
@@ -143,7 +140,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 }
-
 // struttura da definire per l'invio del json
 type FileRecord struct {
 	Hash      string `json:"hash"`
@@ -153,7 +149,6 @@ type FileRecord struct {
 	SizeBytes int64  `json:"size_bytes"`
 	FilePath  string `json:"file_path"`
 }
-
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
 	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path FROM files WHERE title LIKE ? OR author LIKE ?",
