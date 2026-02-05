@@ -11,8 +11,6 @@
     <StackPanel Margin="15">
         <TextBlock Text="Titolo:"/>
         <TextBox Name="title" Margin="0,5,0,10"/>
-        <TextBlock Text="Autore:"/>
-        <TextBox Name="author" Margin="0,5,0,15"/>
         <Button Content="Conferma" Click="BtnConfirmClick" IsDefault="True" Height="30"/>
     </StackPanel>
 </Window>

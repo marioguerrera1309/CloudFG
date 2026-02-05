@@ -29,13 +29,8 @@ namespace LibgenUI
                     {
                         foreach (var libro in risultati)
                         {
-                            // Se l'utente del file nel DB è lo stesso che ha fatto il login
-                            if (libro.User == username) {
-                                libro.DeleteButtonVisibility = Visibility.Visible;
-                            }
-                            else {
-                                libro.DeleteButtonVisibility = Visibility.Collapsed;
-                            }
+                            libro.DeleteButtonVisibility = Visibility.Visible;
+                           
                         }
                         lstResults.ItemsSource = risultati;
                     }
@@ -54,9 +49,10 @@ namespace LibgenUI
             try {
                 HttpClient client = new HttpClient();
                 // Chiediamo il file al server usando l'hash
-                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}");
+                var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}&user={username}");
                 if (response.IsSuccessStatusCode) {
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
+                    Console.WriteLine("qui ci siamo arrivati");
                     string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
                     Directory.CreateDirectory(tempFolder);
                     // Se Title è null, usa l'Hash o una stringa generica come nome file

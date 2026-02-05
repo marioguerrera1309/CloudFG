@@ -27,7 +27,7 @@ namespace LibgenUI
                 if (detailsWin.ShowDialog() == true) // Resta bloccato finché non preme Conferma
                 {
                     string title = detailsWin.DocumentTitle;
-                    string author = detailsWin.DocumentAuthor;
+                    string author = username;
                     //Assegna al label il nome del file selezionato<
                     lblFileName.Text = Path.GetFileName(filePath);
                     await UploadFile(filePath, title, author);
@@ -47,7 +47,6 @@ namespace LibgenUI
                 //Aggiunge il file al contenuto del form
                 form.Add(new StringContent(title), "title");
                 form.Add(new StringContent(author), "author");
-                form.Add(new StringContent(username), "user");
                 form.Add(streamContent, "file", Path.GetFileName(filePath));
                 var response = await client.PostAsync("http://localhost:8080/upload", form);
                 if (response.IsSuccessStatusCode) {
@@ -74,7 +73,7 @@ namespace LibgenUI
         }
         private void RemoveText(object sender, RoutedEventArgs e)
         {
-            if (lblSearch.Text == "Inserisci un titolo o un autore...") {
+            if (lblSearch.Text == "Inserisci un titolo") {
                 lblSearch.Text = "";
                 lblSearch.Foreground = System.Windows.Media.Brushes.Black;
             }

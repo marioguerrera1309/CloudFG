@@ -9,12 +9,11 @@ namespace LibgenUI
         public string? Date { get; set; }
         public long SizeBytes { get; set; }
         public string? FilePath { get; set; }
-        public string? User { get; set; }
         public Visibility DeleteButtonVisibility { get; set; }//per gestire la visibilità del pulsante di eliminazione
         //Questo dice a C# che è accettabile che quei valori siano 
         //inizialmente vuoti mentre il sistema "spacchetta" il JSON che arriva da Go.
         public Document() { }  //costruttore vuoto necessario per il json
-        public Document(string hash, string title, string author, string date, long sizeBytes, string filePath, string user)
+        public Document(string hash, string title, string author, string date, long sizeBytes, string filePath)
         {
             Hash = hash;
             Title = title;
@@ -22,7 +21,6 @@ namespace LibgenUI
             Date = date;
             SizeBytes = sizeBytes;
             FilePath = filePath;
-            User = user;
         }
     }
 }
