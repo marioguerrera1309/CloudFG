@@ -96,7 +96,7 @@ namespace LibgenUI
             }
             searchWin.Top = nextTop;
             last = searchWin;
-            searchWin.Show();
+            //searchWin.Show();
         }
         private void WindowClosed(object sender, EventArgs e)
         {

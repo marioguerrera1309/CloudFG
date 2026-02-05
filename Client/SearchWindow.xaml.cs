@@ -33,6 +33,11 @@ namespace LibgenUI
                            
                         }
                         lstResults.ItemsSource = risultati;
+                        this.Show();
+                    } else {
+                        MessageBox.Show("Nessun risultato trovato.");
+                        lstResults.ItemsSource = null;
+                        this.Close();
                     }
                 }
             } catch (Exception ex) {
@@ -86,7 +91,7 @@ namespace LibgenUI
                     if (response.IsSuccessStatusCode) {
                     MessageBox.Show("Eliminato!");
                     //ricarica la ricerca per aggiornare la lista
-                    LoadResult(""); 
+                    LoadResult(libro.Title); 
                 }
                 } catch (Exception ex) {
                     MessageBox.Show($"Errore: {ex.Message}");
