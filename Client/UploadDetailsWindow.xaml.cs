@@ -10,6 +10,10 @@ namespace LibgenUI
         }
         private void BtnConfirmClick(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(title.Text)) {
+                MessageBox.Show("Inserisci un titolo valido!", "Attenzione");
+                return;
+            }
             DocumentTitle = title.Text;
             this.DialogResult = true;// Chiude la finestra e conferma l'operazione
         }
