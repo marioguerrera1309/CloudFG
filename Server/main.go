@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time" // libreria aggiunta per gestire i timestamp di registrazione dei file
 
 	_ "modernc.org/sqlite"
@@ -167,7 +168,7 @@ type FileRecord struct {
 	Author    string `json:"author"`
 	Date      string `json:"date"`
 	SizeBytes int64  `json:"size_bytes"`
-	FilePath  string `json:"file_path"`
+	FilePath  string `json:"FilePath"`
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +188,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.Date, &f.SizeBytes, &f.FilePath); err != nil {
 			continue
 		}
+		f.FilePath = filepath.Base(f.FilePath)
 		results = append(results, f)
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -238,6 +240,10 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON non valido", http.StatusBadRequest)
 		return
 	}
+	if req.Username == "" || req.Password == "" {
+		http.Error(w, "Username e Password sono obbligatori!", http.StatusBadRequest)
+		return
+	}
 	_, err := db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", req.Username, hashString(req.Password))
 	if err != nil {
 		http.Error(w, "Username già esistente", http.StatusConflict)
@@ -257,13 +263,45 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	var storedPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE username = ?", req.Username).Scan(&storedPassword)
 	if err != nil || storedPassword != hashString(req.Password) {
-		http.Error(w, "Credenziali non valide", http.StatusUnauthorized)
+		http.Error(w, "Credenziali non valide. Username o Password errate", http.StatusUnauthorized)
 		return
 	}
 	// Login riuscito: restituiamo il cookie
 	token := fmt.Sprintf("%s-%d", req.Username, time.Now().Unix())
 	fmt.Fprint(w, token)
 }
+
+func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	author := r.URL.Query().Get("user")
+	if author == "" {
+		http.Error(w, "Parametro 'user' mancante", http.StatusBadRequest)
+		return
+	}
+	rows, err := db.Query("SELECT file_path FROM files WHERE author = ?", author)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var filePath string
+			if err := rows.Scan(&filePath); err == nil {
+				os.Remove(filePath) // Rimuove il file fisico
+			}
+		}
+	}
+	_, err = db.Exec("DELETE FROM files WHERE author = ?", author)
+	if err != nil {
+		http.Error(w, "Errore eliminazione files dal DB", http.StatusInternalServerError)
+		return
+	}
+	_, err = db.Exec("DELETE FROM users WHERE username = ?", author)
+	if err != nil {
+		http.Error(w, "Errore eliminazione utente dal DB", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "Account e dati di '%s' rimossi correttamente", author)
+}
+
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
@@ -272,6 +310,7 @@ func main() {
 	http.HandleFunc("/delete", deleteHandler)
 	http.HandleFunc("/register", registerHandler)
 	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/delete_user", deleteUserHandler)
 	fmt.Println("Server Go avviato su http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Errore nell'avvio del server: %s\n", err)

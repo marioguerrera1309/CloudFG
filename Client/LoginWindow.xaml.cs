@@ -19,7 +19,7 @@ namespace LibgenUI
         private async void BtnRegisterClick(object sender, RoutedEventArgs e)
         {
             if (txtPassReg.Password != txtPassConfirm.Password) {
-                MessageBox.Show("Le password non coincidono!");
+                MessageBox.Show("Le password non coincidono!", "Erorre di validazione!",MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             var data = new { Username = txtUserReg.Text, Password = txtPassReg.Password };
@@ -50,8 +50,10 @@ namespace LibgenUI
                     new MainWindow(username).Show();
                     this.Close();
                 }
-                else {
-                    MessageBox.Show("Errore durante l'autenticazione.");
+                else{
+                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Errore sconosciuto";
+                    MessageBox.Show(errorMessage, "Errore Login", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)

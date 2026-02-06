@@ -57,7 +57,6 @@ namespace LibgenUI
                 var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}&user={username}");
                 if (response.IsSuccessStatusCode) {
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
-                    Console.WriteLine("qui ci siamo arrivati");
                     string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
                     Directory.CreateDirectory(tempFolder);
                     // Se Title è null, usa l'Hash o una stringa generica come nome file

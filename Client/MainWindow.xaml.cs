@@ -115,5 +115,37 @@ namespace LibgenUI
             // Chiude la MainWindow
             this.Close();
         }
+
+        private async void BtnDeleteAccountClick(object sender, RoutedEventArgs e)
+        {
+            
+            var conferma = MessageBox.Show($"Sei sicuro di voler eliminare '{username}'?", "Conferma", MessageBoxButton.YesNo);
+            if (conferma == MessageBoxResult.Yes){
+                try {
+                    HttpClient client = new HttpClient();
+                    var response = await client.DeleteAsync($"http://localhost:8080/delete_user?user={username}");
+                    if (response.IsSuccessStatusCode){
+                        MessageBox.Show("Utente e relativi file eliminati correttamente!");
+                    
+                        // Rimuove il token salvato
+                        LibgenUI.Properties.Settings.Default.UserToken = string.Empty;
+                        LibgenUI.Properties.Settings.Default.Save();
+                        // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
+                        this.Closed -= WindowClosed;
+                        // Apre la LoginWindow
+                        LoginWindow loginWin = new LoginWindow();
+                        loginWin.Show();
+                        // Chiude la MainWindow
+                        this.Close();
+            
+
+                    }
+                } catch (Exception ex) {
+                    MessageBox.Show($"Errore: {ex.Message}");
+                }
+            }
+            
+        }
+
     }
 }
