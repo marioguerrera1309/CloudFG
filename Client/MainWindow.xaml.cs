@@ -3,7 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Windows;
-namespace LibgenUI
+namespace CloudFG
 {
     public partial class MainWindow : Window
     {
@@ -105,8 +105,8 @@ namespace LibgenUI
         private void BtnLogoutClick(object sender, RoutedEventArgs e)
         {
             // Rimuove il token salvato
-            LibgenUI.Properties.Settings.Default.UserToken = string.Empty;
-            LibgenUI.Properties.Settings.Default.Save();
+            CloudFG.Properties.Settings.Default.UserToken = string.Empty;
+            CloudFG.Properties.Settings.Default.Save();
             // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
             this.Closed -= WindowClosed;
             // Apre la LoginWindow
@@ -128,8 +128,8 @@ namespace LibgenUI
                         MessageBox.Show("Utente e relativi file eliminati correttamente!");
                     
                         // Rimuove il token salvato
-                        LibgenUI.Properties.Settings.Default.UserToken = string.Empty;
-                        LibgenUI.Properties.Settings.Default.Save();
+                        CloudFG.Properties.Settings.Default.UserToken = string.Empty;
+                        CloudFG.Properties.Settings.Default.Save();
                         // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
                         this.Closed -= WindowClosed;
                         // Apre la LoginWindow

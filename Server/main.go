@@ -23,8 +23,8 @@ type AuthRequest struct {
 
 func initDatabase() {
 	var err error
-	// Apre (o crea) il file libgen.db. Nota il nome del driver "sqlite"
-	db, err = sql.Open("sqlite", "./libgen.db")
+	// Apre (o crea) il file CloudFG.db. Nota il nome del driver "sqlite"
+	db, err = sql.Open("sqlite", "./CloudFG.db")
 	if err != nil {
 		log.Fatal("Errore apertura DB:", err)
 	}

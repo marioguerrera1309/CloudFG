@@ -1,5 +1,5 @@
 ﻿using System.Windows;
-namespace LibgenUI
+namespace CloudFG
 {
     public partial class App : Application
     {
@@ -9,7 +9,7 @@ namespace LibgenUI
             bool sessioneValida = false;
             bool tokenpresente = false;
             base.OnStartup(e);// Esegue prima il codice di inizializzazione di Application
-            string token = LibgenUI.Properties.Settings.Default.UserToken;
+            string token = CloudFG.Properties.Settings.Default.UserToken;
             // Se c'è un token salvato non scaduto vai direttamente alla MainWindow
             if (!string.IsNullOrEmpty(token))
             {
@@ -36,8 +36,8 @@ namespace LibgenUI
                 new MainWindow(username).Show();
             }
             else {
-                LibgenUI.Properties.Settings.Default.UserToken = string.Empty;
-                LibgenUI.Properties.Settings.Default.Save();
+                CloudFG.Properties.Settings.Default.UserToken = string.Empty;
+                CloudFG.Properties.Settings.Default.Save();
                 if(tokenpresente) {
                     MessageBox.Show("La sessione è scaduta. Effettua nuovamente il login.", "Sessione scaduta", MessageBoxButton.OK, MessageBoxImage.Information);
                 }

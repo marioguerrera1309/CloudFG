@@ -1,4 +1,4 @@
 Server/uploads/
 Client/bin/
-CLient/obj/
-Server/libgen.db
+Client/obj/
+Server/CloudFG.db

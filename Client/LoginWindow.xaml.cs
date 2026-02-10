@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Windows;
-namespace LibgenUI
+namespace CloudFG
 {
     public partial class LoginWindow : Window
     {
@@ -34,11 +34,11 @@ namespace LibgenUI
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var response = await client.PostAsync(url, content);
                 if (response.IsSuccessStatusCode) {
-                    // Il server restituisce il cookie di sessione come contenuto della risposta
+                    // Il server restitsce il cookie di sessione come contenuto della risposta
                     string token = await response.Content.ReadAsStringAsync();
                     // Salvataggio in locale
-                    LibgenUI.Properties.Settings.Default.UserToken = token;
-                    LibgenUI.Properties.Settings.Default.Save();
+                    CloudFG.Properties.Settings.Default.UserToken = token;
+                    CloudFG.Properties.Settings.Default.Save();
                     // Apre MainWindow e chiude LoginWindow
                     try
                     {

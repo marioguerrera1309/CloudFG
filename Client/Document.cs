@@ -1,5 +1,5 @@
 ﻿using System.Windows;
-namespace LibgenUI
+namespace CloudFG
 {
     public class Document
     {

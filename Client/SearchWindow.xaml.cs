@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
 using System.IO;
-namespace LibgenUI
+namespace CloudFG
 {
     public partial class SearchWindow : Window
     {
@@ -57,7 +57,7 @@ namespace LibgenUI
                 var response = await client.GetAsync($"http://localhost:8080/download?hash={libro.Hash}&user={username}");
                 if (response.IsSuccessStatusCode) {
                     // Definiamo dove salvare il file temporaneamente (es: nella cartella Download dell'utente)
-                    string tempFolder = Path.Combine(Path.GetTempPath(), "LibgenDownloads");
+                    string tempFolder = Path.Combine(Path.GetTempPath(), "CloudFGDownloads");
                     Directory.CreateDirectory(tempFolder);
                     // Se Title è null, usa l'Hash o una stringa generica come nome file
                     string fileName = libro.Title ?? libro.Hash ?? "documento_senza_nome";
@@ -68,7 +68,7 @@ namespace LibgenUI
                     //apriamo il file con il programma predefinito (Word, PDF Reader, ecc.)
                     var psi = new ProcessStartInfo {
                         FileName = fullSavePath,
-                        UseShellExecute = true // Fondamentale per aprire il file e non un eseguibile
+                        UseShellExecute = true // Fondamentale per aprire il file e non un esegbile
                     };
                     Process.Start(psi);
                 }
