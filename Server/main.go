@@ -144,7 +144,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		os.Remove(fullPath)
 		return
 	}
-
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	_, err = db.Exec("INSERT INTO files (hash, title, author, upload_time, size_bytes, file_path) VALUES (?, ?, ?, ?, ?, ?)",
 		fileHash, title, author, timestamp, written, fullPath)
@@ -160,21 +159,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
-	// 1. Definiamo i percorsi (partendo dalla radice del progetto Libgen)
-
 	scriptPath := "../Analitics/main.py"
-
-	// 2. Prepariamo il comando
 	cmd := exec.Command("../Analitics/.venv/Scripts/python.exe", scriptPath, filePath)
-
-	// 3. IL TRUCCO: Colleghiamo l'output di Python a quello di Go
-	// Questo reindirizza lo Standard Output e lo Standard Error di Python
-	// direttamente nel terminale dove stai vedendo i log di Go.
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// 4. Avviamo il comando
-	// Usiamo Run() perché siamo già dentro una goroutine ("go startPythonAnalysis")
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Errore durante l'esecuzione di Python: %v\n", err)

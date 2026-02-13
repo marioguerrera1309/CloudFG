@@ -27,11 +27,6 @@ namespace CloudFG
                     var risultati = System.Text.Json.JsonSerializer.Deserialize<List<Document>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     if (risultati != null)
                     {
-                        foreach (var libro in risultati)
-                        {
-                            libro.DeleteButtonVisibility = Visibility.Visible;
-                           
-                        }
                         lstResults.ItemsSource = risultati;
                         this.Show();
                     } else {
