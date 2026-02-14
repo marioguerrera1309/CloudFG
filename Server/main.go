@@ -17,9 +17,30 @@ import (
 
 var db *sql.DB
 
+type FileRecord struct {
+	Hash      		string 		`json:"hash"`
+	Title     		string 		`json:"title"`
+	Author    		string 		`json:"author"`
+	Date      		string 		`json:"date"`
+	SizeBytes 		int64  		`json:"size_bytes"`
+	FilePath  		string 		`json:"FilePath"`
+}
+
 type AuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username 		string 		`json:"username"`
+	Password 		string 		`json:"password"`
+}
+
+type Analitics struct {
+    GulpeaseIndex 	float64    	`json:"gulpease_index"`
+	Letters 		int 		`json:"letters"`
+	Words   		int 		`json:"words"`
+	Sentences 		int 		`json:"sentences"`
+}
+
+type Data struct {
+	Hash      		string 		`json:"hash"`
+	Analitics		Analitics 	`json:"analitics"`
 }
 
 func initDatabase() {
@@ -54,8 +75,22 @@ func initDatabase() {
 	if err != nil {
 		log.Fatal("Errore creazione tabella:", err)
 	}
+	// Creazione della tabella per gli analitics
+	statement = `
+	CREATE TABLE IF NOT EXISTS analitics (
+		hash TEXT PRIMARY KEY,
+		gulpease_index REAL,
+		letters INTEGER,
+		words INTEGER,
+		sentences INTEGER
+	);`
+	_, err = db.Exec(statement)
+	if err != nil {
+		log.Fatal("Errore creazione tabella:", err)
+	}
 	fmt.Println("Database pronto!")
 }
+
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	//Limita il file a 10MB
 	//r.ParseMultipartForm(10 << 20)
@@ -157,24 +192,18 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	go startPythonAnalysis(fullPath)
 	//fmt.Fprintf(w, "File caricato correttamente: %s", handler.Filename)
 }
+
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
 	scriptPath := "../Analitics/main.py"
 	cmd := exec.Command("../Analitics/.venv/Scripts/python.exe", scriptPath, filePath)
+	//Stampa l'output di Python direttamente sulla console del server Go
+	cmd.Stdout = os.Stdout
+    cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Errore durante l'esecuzione di Python: %v\n", err)
 	}
-}
-
-// struttura da definire per l'invio del json
-type FileRecord struct {
-	Hash      string `json:"hash"`
-	Title     string `json:"title"`
-	Author    string `json:"author"`
-	Date      string `json:"date"`
-	SizeBytes int64  `json:"size_bytes"`
-	FilePath  string `json:"FilePath"`
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -200,6 +229,29 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
+
+func searchAllHandler(w http.ResponseWriter, r *http.Request) {
+	author := r.URL.Query().Get("user")
+	// Esegue la query sul database
+	rows, err := db.Query("SELECT hash, title, author, upload_time, size_bytes, file_path FROM files WHERE author=?", author)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+	var results []FileRecord
+	for rows.Next() {
+		var f FileRecord
+		if err := rows.Scan(&f.Hash, &f.Title, &f.Author, &f.Date, &f.SizeBytes, &f.FilePath); err != nil {
+			continue
+		}
+		f.FilePath = filepath.Base(f.FilePath)
+		results = append(results, f)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
 	author := r.URL.Query().Get("user")
@@ -212,6 +264,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
 	http.ServeFile(w, r, filePath)
 }
+
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
 	author := r.URL.Query().Get("user")
@@ -240,6 +293,7 @@ func hashString(input string) string {
 	h.Write([]byte(input))
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -303,16 +357,54 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Errore eliminazione utente dal DB", http.StatusInternalServerError)
 		return
 	}
-
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Account e dati di '%s' rimossi correttamente", author)
+}
+func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
+        return
+    }
+	//fmt.Println("Ricevuta richiesta di upload analitics")
+	var data Data
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "JSON non valido", http.StatusBadRequest)
+		return
+	}
+	//fmt.Printf("Dati ricevuti: Hash: %s, Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d\n", data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	// Salvataggio degli analitics nel database
+	_, err := db.Exec("INSERT OR REPLACE INTO analitics (hash, gulpease_index, letters, words, sentences) VALUES (?, ?, ?, ?, ?)",
+		data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences)
+	if err != nil {
+		http.Error(w, "Errore salvataggio analitics nel DB", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("Dati salvati correttamente nel database")
+}
+
+func downloadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
+	hash := r.URL.Query().Get("hash")
+	var analitics Analitics
+	err := db.QueryRow("SELECT gulpease_index, letters, words, sentences FROM analitics WHERE hash = ?", hash).Scan(&analitics.GulpeaseIndex, &analitics.Letters, &analitics.Words, &analitics.Sentences)
+	if err != nil {
+		http.Error(w, "Errore nel recupero analitics", http.StatusInternalServerError)
+		return
+	}
+	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(analitics)
 }
 
 func main() {
 	initDatabase()
 	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/upload_analitics", uploadAnaliticsHandler)
 	http.HandleFunc("/search", searchHandler)
+	http.HandleFunc("/search_all", searchAllHandler)
 	http.HandleFunc("/download", downloadHandler)
+	http.HandleFunc("/download_analitics", downloadAnaliticsHandler)
 	http.HandleFunc("/delete", deleteHandler)
 	http.HandleFunc("/register", registerHandler)
 	http.HandleFunc("/login", loginHandler)

@@ -13,9 +13,11 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,20">
             <TextBlock Name="lblWelcome" Text="Benvenuto!" VerticalAlignment="Center" 
                        FontSize="14" FontWeight="SemiBold" Foreground="#333" Margin="0,0,10,0"/>
+            <Button Content="Visualizza i tuoi documenti" Click="BtnAllClick" Width="150" Height="25" Margin="0,0,5,0" 
+                    Background="#F5F5F5" Cursor="Hand"/>
             <Button Content="Esci" Click="BtnLogoutClick" Width="60" Height="25" Margin="0,0,5,0" 
                     Background="#F5F5F5" Cursor="Hand"/>
-             <Button Content="Elimina" Click="BtnDeleteAccountClick" Width="60" Height="25" Margin="5,0,0,0"
+             <Button Content="Elimina account" Click="BtnDeleteAccountClick" Width="100" Height="25" Margin="0,0,0,0"
                     Background="#F5F5F5" Cursor="Hand"/>
         </StackPanel>
         <StackPanel Grid.Row="1">

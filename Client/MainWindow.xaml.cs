@@ -96,6 +96,7 @@ namespace CloudFG
             }
             searchWin.Top = nextTop;
             last = searchWin;
+            //La finestra verrà mostrata dopo aver ricevuto la risposta se non è vuota
             //searchWin.Show();
         }
         private void WindowClosed(object sender, EventArgs e)
@@ -117,8 +118,7 @@ namespace CloudFG
         }
 
         private async void BtnDeleteAccountClick(object sender, RoutedEventArgs e)
-        {
-            
+        {   
             var conferma = MessageBox.Show($"Sei sicuro di voler eliminare '{username}'?", "Conferma", MessageBoxButton.YesNo);
             if (conferma == MessageBoxResult.Yes){
                 try {
@@ -126,7 +126,6 @@ namespace CloudFG
                     var response = await client.DeleteAsync($"http://localhost:8080/delete_user?user={username}");
                     if (response.IsSuccessStatusCode){
                         MessageBox.Show("Utente e relativi file eliminati correttamente!");
-                    
                         // Rimuove il token salvato
                         CloudFG.Properties.Settings.Default.UserToken = string.Empty;
                         CloudFG.Properties.Settings.Default.Save();
@@ -137,8 +136,6 @@ namespace CloudFG
                         loginWin.Show();
                         // Chiude la MainWindow
                         this.Close();
-            
-
                     }
                 } catch (Exception ex) {
                     MessageBox.Show($"Errore: {ex.Message}");
@@ -146,6 +143,23 @@ namespace CloudFG
             }
             
         }
-
+        private void BtnAllClick(object sender, RoutedEventArgs e)
+        {
+            SearchWindow searchWin = new SearchWindow("", username); // Passa una stringa vuota per visualizzare tutti i documenti
+            double offset = 40;//spostamento della finestra rispetto alla finestra principale
+            double nextLeft = last.Left + offset;
+            // Se superiamo la larghezza dello schermo ricominciamo da sinistra
+            if (nextLeft + searchWin.Width > SystemParameters.VirtualScreenWidth) {
+                nextLeft = 0;
+            }
+            searchWin.Left = nextLeft;
+            double nextTop = last.Top + offset;
+            // Se superiamo la larghezza dello schermo, ricominciamo da sinistra
+            if (nextTop + searchWin.Height > SystemParameters.VirtualScreenHeight) {
+                nextTop = 0;
+            }
+            searchWin.Top = nextTop;
+            last = searchWin;
+        }
     }
 }

@@ -23,7 +23,7 @@ namespace CloudFG
                     long tokenTime = long.Parse(timestampStr);
                     long oraAttuale = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     //300 secondi = 5 minuti
-                    if (oraAttuale - tokenTime <= 10) {
+                    if (oraAttuale - tokenTime <= 300) {
                         sessioneValida = true;
                     }
                 }

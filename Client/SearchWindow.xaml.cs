@@ -3,15 +3,18 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 namespace CloudFG
 {
     public partial class SearchWindow : Window
     {
         private readonly string username;
+        private string query;
         public SearchWindow(string query, string username)
         {
             InitializeComponent();
             this.username = username;
+            this.query = query;
             this.Title = "Risultati per: " + query;
             LoadResult(query);
         }
@@ -20,11 +23,17 @@ namespace CloudFG
             try {
                 HttpClient client = new HttpClient();
                 // Chiamata al server Go passando la query nell'URL
-                var response = await client.GetAsync($"http://localhost:8080/search?query={query}&user={username}");
+                HttpResponseMessage response;
+                if(string.IsNullOrWhiteSpace(query)) {
+                    this.Title = "I tuoi documenti";
+                    response = await client.GetAsync($"http://localhost:8080/search_all?user={username}");
+                } else {
+                    response = await client.GetAsync($"http://localhost:8080/search?query={query}&user={username}");
+                }
                 if (response.IsSuccessStatusCode) {
                     string json = await response.Content.ReadAsStringAsync();
                     // Trasforma il JSON ricevuto dal server in una lista di oggetti Document
-                    var risultati = System.Text.Json.JsonSerializer.Deserialize<List<Document>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var risultati = JsonSerializer.Deserialize<List<Document>>(json);
                     if (risultati != null)
                     {
                         lstResults.ItemsSource = risultati;
@@ -85,14 +94,30 @@ namespace CloudFG
                     if (response.IsSuccessStatusCode) {
                     MessageBox.Show("Eliminato!");
                     //ricarica la ricerca per aggiornare la lista
-                    LoadResult(libro.Title); 
+                    LoadResult(query); 
                 }
                 } catch (Exception ex) {
                     MessageBox.Show($"Errore: {ex.Message}");
                 }
             }
         }
-
-
+        private async void BtnViewAnaliticsClick(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var libro = button?.DataContext as Document;
+            if (libro == null) return;
+            try {
+                HttpClient client = new HttpClient();
+                var response = await client.GetAsync($"http://localhost:8080/download_analitics?hash={libro.Hash}");
+                if (response.IsSuccessStatusCode) {
+                    var content = await response.Content.ReadAsStringAsync();
+                    //MessageBox.Show($"Contenuto ricevuto: {content}");
+                    var analitics = JsonSerializer.Deserialize<Analitics>(content);
+                    MessageBox.Show($"Analisi per '{libro.Title}':\nGulpease Index: {analitics.GulpeaseIndex}\nLettere: {analitics.Letters}\nParole: {analitics.Words}\nFrasi: {analitics.Sentences}");
+                }
+            } catch (Exception ex) {
+                MessageBox.Show($"Errore durante il recupero delle analisi: {ex.Message}");
+            }
+        }
     }
 }
