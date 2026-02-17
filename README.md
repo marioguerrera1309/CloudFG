@@ -31,6 +31,7 @@ py -m venv .venv
 .venv\Scripts\activate
 pip install spacy
 pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
+pip install python-docx pymupdf
 ```
 3. Per compilare ed eseguire il Client:
 

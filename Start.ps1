@@ -8,6 +8,7 @@ if (-not (Test-Path ".venv")) {
 #Installazione dipendenze
 pip install spacy
 pip install https://github.com/explosion/spacy-models/releases/download/it_core_news_sm-3.8.0/it_core_news_sm-3.8.0-py3-none-any.whl
+pip install python-docx pymupdf
 cd ..
 #Compilazione e avvio Server Go
 Write-Host "--- Compilazione e avvio Server Go ---" -ForegroundColor Cyan

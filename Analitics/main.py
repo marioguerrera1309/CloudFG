@@ -4,7 +4,8 @@ import spacy
 import requests
 import hashlib
 import json
-
+import fitz  # PyMuPDF
+from docx import Document as DocxReader
 try:
     nlp = spacy.load("it_core_news_sm")
 except OSError:
@@ -19,6 +20,30 @@ def get_file_hash(file_path):
             hash.update(byte_block)
     return hash.hexdigest()
 
+def extract_text(file_path):
+    ext = os.path.splitext(file_path)[1].lower()
+    testo = ""
+
+    if ext == ".txt":
+        with open(file_path, 'r', encoding='utf-8') as f:
+            testo = f.read()
+            
+    elif ext == ".pdf":
+        doc = fitz.open(file_path)
+        for pagina in doc:
+            testo += pagina.get_text()
+        doc.close()
+        
+    elif ext == ".docx":
+        doc = DocxReader(file_path)
+        testo = "\n".join([para.text for para in doc.paragraphs])
+        
+    else:
+        raise ValueError(f"Formato {ext} non supportato per l'analisi del testo")
+    
+    return testo
+
+
 def main():
     if len(sys.argv) > 1:
         file_path = sys.argv[1]
@@ -28,15 +53,11 @@ def main():
         sys.exit(1)
     try:
         hash = get_file_hash(file_path)
+        testo = extract_text(file_path)
     except Exception as e:
         print(f"Errore calcolo hash: {e}")
         sys.exit(1)
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            testo = f.read()
-    except Exception as e:
-        print(f"Errore durante la lettura del file: {e}")
-        sys.exit(1)
+    
     doc = nlp(testo)
     n_lettere = sum(len(token.text) for token in doc if token.is_alpha)
     n_parole = len([token for token in doc if not token.is_punct])
@@ -44,15 +65,18 @@ def main():
     if n_parole == 0:
         indice = 0
     else:
+        WPM=200 #numero di parole lette al minuto secondo le statistiche
         # Formula Gulpease: 89 + (300 * frasi - 10 * lettere) / parole
         indice = 89 + (300 * n_frasi - 10 * n_lettere) / n_parole
+        tempo_lettura_minuti = n_parole /WPM 
     # Creazione del json da inviare al server Go
     analitics = {
         "file_path": file_path,
         "gulpease_index": indice,
         "letters": n_lettere,
         "words": n_parole,
-        "sentences": n_frasi
+        "sentences": n_frasi,
+        "read_time": tempo_lettura_minuti
     }
     data = {
         "hash": hash,

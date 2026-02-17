@@ -36,6 +36,7 @@ type Analitics struct {
 	Letters 		int 		`json:"letters"`
 	Words   		int 		`json:"words"`
 	Sentences 		int 		`json:"sentences"`
+	ReadTime		float64		`json:"read_time"`
 }
 
 type Data struct {
@@ -82,7 +83,8 @@ func initDatabase() {
 		gulpease_index REAL,
 		letters INTEGER,
 		words INTEGER,
-		sentences INTEGER
+		sentences INTEGER,
+		read_time REAL
 	);`
 	_, err = db.Exec(statement)
 	if err != nil {
@@ -375,8 +377,8 @@ func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	// Salvataggio degli analitics nel database
-	_, err := db.Exec("INSERT OR REPLACE INTO analitics (hash, gulpease_index, letters, words, sentences) VALUES (?, ?, ?, ?, ?)",
-		data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences)
+	_, err := db.Exec("INSERT OR REPLACE INTO analitics (hash, gulpease_index, letters, words, sentences, read_time) VALUES (?, ?, ?, ?, ?, ?)",
+		data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences, data.Analitics.ReadTime)
 	if err != nil {
 		http.Error(w, "Errore salvataggio analitics nel DB", http.StatusInternalServerError)
 		return
@@ -387,12 +389,12 @@ func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 func downloadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 	hash := r.URL.Query().Get("hash")
 	var analitics Analitics
-	err := db.QueryRow("SELECT gulpease_index, letters, words, sentences FROM analitics WHERE hash = ?", hash).Scan(&analitics.GulpeaseIndex, &analitics.Letters, &analitics.Words, &analitics.Sentences)
+	err := db.QueryRow("SELECT gulpease_index, letters, words, sentences, read_time FROM analitics WHERE hash = ?", hash).Scan(&analitics.GulpeaseIndex, &analitics.Letters, &analitics.Words, &analitics.Sentences, &analitics.ReadTime)
 	if err != nil {
 		http.Error(w, "Errore nel recupero analitics", http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences)
+	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, ReadTime:%.2f\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences, analitics.ReadTime)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(analitics)
 }
