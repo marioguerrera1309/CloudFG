@@ -271,24 +271,39 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filePath)
 }
 
-func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	fileHash := r.URL.Query().Get("hash")
-	author := r.URL.Query().Get("user")
+// Funzione per eliminare un file da files, relative analitics (se non ci sono altri file con lo stesso hash) e il file fisico da /uploads
+func Delete(fileHash string, author string) error {
 	var filePath string
-	// si recupera il percorso per cancellare il file anche in memoria
+	// Si recupera il percorso per cancellare il file anche in memoria
 	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? AND author = ?", fileHash, author).Scan(&filePath)
 	if err != nil {
-		http.Error(w, "File non trovato", http.StatusNotFound)
-		return
+		return err
 	}
-	// Eliminazione del record nel DB
+	// Eliminazione da files
 	_, err = db.Exec("DELETE FROM files WHERE hash = ? AND author = ?", fileHash, author)
 	if err != nil {
-		http.Error(w, "Errore eliminazione DB", http.StatusInternalServerError)
-		return
+		return err
 	}
 	// Eliminazione da /uploads
 	os.Remove(filePath)
+	// Eliminazione degli analitics associati al file
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM files WHERE hash = ?", fileHash).Scan(&count)
+	if err == nil && count == 0 {
+		// Significa che non ci sono utenti con lo stesso file quindi possiamo eliminare gli analitics
+		db.Exec("DELETE FROM analitics WHERE hash = ?", fileHash)
+	}
+	// Se siamo qui tutto è andato a buon fine e ritorniamo nil (nessun errore)
+	return nil
+}
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+	fileHash := r.URL.Query().Get("hash")
+	author := r.URL.Query().Get("user")
+	err := Delete(fileHash, author)
+	if err != nil {
+		http.Error(w, "Errore eliminazione file", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "File eliminato con successo")
 }
@@ -343,13 +358,13 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Parametro 'user' mancante", http.StatusBadRequest)
 		return
 	}
-	rows, err := db.Query("SELECT file_path FROM files WHERE author = ?", author)
+	rows, err := db.Query("SELECT hash FROM files WHERE author = ?", author)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
-			var filePath string
-			if err := rows.Scan(&filePath); err == nil {
-				os.Remove(filePath) // Rimuove il file fisico
+			var fileHash string
+			if err := rows.Scan(&fileHash); err == nil {
+				Delete(fileHash, author)
 			}
 		}
 	}
