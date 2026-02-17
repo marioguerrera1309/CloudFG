@@ -200,7 +200,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func startPythonAnalysis(filePath string) {
-	fmt.Printf("Analizzatore avviato per: %s\n", filePath)
+	fmt.Printf("Analizzatore python avviato per: %s\n", filePath)
 	scriptPath := "../Analitics/main.py"
 	cmd := exec.Command("../Analitics/.venv/Scripts/python.exe", scriptPath, filePath)
 	//Stampa l'output di Python direttamente sulla console del server Go
@@ -398,7 +398,7 @@ func downloadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Errore nel recupero analitics", http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, ReadTime:%.2f TimeAnalysis:%.2f UniqueWords:%d\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences, analitics.ReadTime, analitics.TimeAnalysis, analitics.UniqueWords)
+	//fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, ReadTime:%.2f TimeAnalysis:%.2f UniqueWords:%d\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences, analitics.ReadTime, analitics.TimeAnalysis, analitics.UniqueWords)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(analitics)
 }
