@@ -113,7 +113,7 @@ namespace CloudFG
                     var content = await response.Content.ReadAsStringAsync();
                     //MessageBox.Show($"Contenuto ricevuto: {content}");
                     var analitics = JsonSerializer.Deserialize<Analitics>(content);
-                    MessageBox.Show($"Analisi per '{libro.Title}':\nGulpease Index: {analitics.GulpeaseIndex}\nLettere: {analitics.Letters}\nParole: {analitics.Words}\nFrasi: {analitics.Sentences}\nTempo di lettura(in minuti): {analitics.ReadTime}");
+                    MessageBox.Show($"Analisi per '{libro.Title}':\nGulpease Index: {analitics.GulpeaseIndex}\nLettere: {analitics.Letters}\nParole: {analitics.Words}\nFrasi: {analitics.Sentences}\nTempo di lettura(in minuti): {analitics.ReadTime}\nTempo di analisi(in secondi): {analitics.TimeAnalysis}\nUnique Words: {analitics.UniqueWords}");
                 }
             } catch (Exception ex) {
                 MessageBox.Show($"Errore durante il recupero delle analisi: {ex.Message}");

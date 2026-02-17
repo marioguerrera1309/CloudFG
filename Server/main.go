@@ -23,7 +23,7 @@ type FileRecord struct {
 	Author    		string 		`json:"author"`
 	Date      		string 		`json:"date"`
 	SizeBytes 		int64  		`json:"size_bytes"`
-	FilePath  		string 		`json:"FilePath"`
+	FilePath  		string 		`json:"file_path"`
 }
 
 type AuthRequest struct {
@@ -37,6 +37,8 @@ type Analitics struct {
 	Words   		int 		`json:"words"`
 	Sentences 		int 		`json:"sentences"`
 	ReadTime		float64		`json:"read_time"`
+	TimeAnalysis	float64		`json:"time_analysis"`
+	UniqueWords		int			`json:"unique_words"`
 }
 
 type Data struct {
@@ -84,7 +86,9 @@ func initDatabase() {
 		letters INTEGER,
 		words INTEGER,
 		sentences INTEGER,
-		read_time REAL
+		read_time REAL,
+		time_analysis REAL,
+		unique_words INTEGER
 	);`
 	_, err = db.Exec(statement)
 	if err != nil {
@@ -373,12 +377,12 @@ func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "JSON non valido", http.StatusBadRequest)
 		return
 	}
-	//fmt.Printf("Dati ricevuti: Hash: %s, Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d\n", data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences)
+	//fmt.Printf("Dati ricevuti: Hash: %s, Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, UniqueWords: %d\n", data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences, data.Analitics.UniqueWords)
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	// Salvataggio degli analitics nel database
-	_, err := db.Exec("INSERT OR REPLACE INTO analitics (hash, gulpease_index, letters, words, sentences, read_time) VALUES (?, ?, ?, ?, ?, ?)",
-		data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences, data.Analitics.ReadTime)
+	_, err := db.Exec("INSERT OR REPLACE INTO analitics (hash, gulpease_index, letters, words, sentences, read_time, time_analysis, unique_words) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+		data.Hash, data.Analitics.GulpeaseIndex, data.Analitics.Letters, data.Analitics.Words, data.Analitics.Sentences, data.Analitics.ReadTime, data.Analitics.TimeAnalysis, data.Analitics.UniqueWords)
 	if err != nil {
 		http.Error(w, "Errore salvataggio analitics nel DB", http.StatusInternalServerError)
 		return
@@ -389,12 +393,12 @@ func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 func downloadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 	hash := r.URL.Query().Get("hash")
 	var analitics Analitics
-	err := db.QueryRow("SELECT gulpease_index, letters, words, sentences, read_time FROM analitics WHERE hash = ?", hash).Scan(&analitics.GulpeaseIndex, &analitics.Letters, &analitics.Words, &analitics.Sentences, &analitics.ReadTime)
+	err := db.QueryRow("SELECT gulpease_index, letters, words, sentences, read_time, time_analysis, unique_words FROM analitics WHERE hash = ?", hash).Scan(&analitics.GulpeaseIndex, &analitics.Letters, &analitics.Words, &analitics.Sentences, &analitics.ReadTime, &analitics.TimeAnalysis, &analitics.UniqueWords)
 	if err != nil {
 		http.Error(w, "Errore nel recupero analitics", http.StatusInternalServerError)
 		return
 	}
-	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, ReadTime:%.2f\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences, analitics.ReadTime)
+	fmt.Printf("Analitics recuperati per hash %s: Gulpease: %.2f, Lettere: %d, Parole: %d, Frasi: %d, ReadTime:%.2f TimeAnalysis:%.2f UniqueWords:%d\n", hash, analitics.GulpeaseIndex, analitics.Letters, analitics.Words, analitics.Sentences, analitics.ReadTime, analitics.TimeAnalysis, analitics.UniqueWords)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(analitics)
 }
