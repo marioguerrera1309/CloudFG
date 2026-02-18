@@ -274,16 +274,21 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 // Funzione per eliminare un file da files, relative analitics (se non ci sono altri file con lo stesso hash) e il file fisico da /uploads
 func Delete(fileHash string, author string) error {
 	var filePath string
+	fmt.Printf("Elimazione file %s di %s\n", fileHash, author)
 	// Si recupera il percorso per cancellare il file anche in memoria
 	err := db.QueryRow("SELECT file_path FROM files WHERE hash = ? AND author = ?", fileHash, author).Scan(&filePath)
 	if err != nil {
 		return err
 	}
+	//fmt.Printf("Percorso del file da eliminare: %s\n", filePath)
 	// Eliminazione da files
 	_, err = db.Exec("DELETE FROM files WHERE hash = ? AND author = ?", fileHash, author)
 	if err != nil {
+		fmt.Printf("Errore eliminazione dal database: %s\n", err)
 		return err
 	}
+	//rowsAffected, _ := x.RowsAffected() 
+	//fmt.Printf("File con hash %s eliminato dal database (righe eliminate: %d)\n", fileHash, rowsAffected)
 	// Eliminazione da /uploads
 	os.Remove(filePath)
 	// Eliminazione degli analitics associati al file
@@ -358,20 +363,20 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Parametro 'user' mancante", http.StatusBadRequest)
 		return
 	}
+	//Conservo gli hash dei file da eliminare in un array per poi eliminarli uno ad uno con la funzione Delete che si occupa di eliminare anche gli analitics associati se non ci sono altri file con lo stesso hash
+	var fileToDelete []string
 	rows, err := db.Query("SELECT hash FROM files WHERE author = ?", author)
 	if err == nil {
-		defer rows.Close()
 		for rows.Next() {
-			var fileHash string
-			if err := rows.Scan(&fileHash); err == nil {
-				Delete(fileHash, author)
+			var h string
+			if err := rows.Scan(&h); err == nil {
+				fileToDelete = append(fileToDelete, h)
 			}
-		}
+    	}
+    	rows.Close()
 	}
-	_, err = db.Exec("DELETE FROM files WHERE author = ?", author)
-	if err != nil {
-		http.Error(w, "Errore eliminazione files dal DB", http.StatusInternalServerError)
-		return
+	for _, hash := range fileToDelete {
+		Delete(hash, author)
 	}
 	_, err = db.Exec("DELETE FROM users WHERE username = ?", author)
 	if err != nil {
