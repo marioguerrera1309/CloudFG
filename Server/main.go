@@ -96,7 +96,7 @@ func initDatabase() {
 	}
 	fmt.Println("Database pronto!")
 }
-
+// Handler per la gestione dell'upload dei file
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	//Limita il file a 10MB
 	//r.ParseMultipartForm(10 << 20)
@@ -198,7 +198,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	go startPythonAnalysis(fullPath)
 	//fmt.Fprintf(w, "File caricato correttamente: %s", handler.Filename)
 }
-
+// Funzione per avviare l'analisi del file con lo script Python
 func startPythonAnalysis(filePath string) {
 	fmt.Printf("Analizzatore python avviato per: %s\n", filePath)
 	scriptPath := "../Analitics/main.py"
@@ -211,7 +211,7 @@ func startPythonAnalysis(filePath string) {
 		fmt.Printf("Errore durante l'esecuzione di Python: %v\n", err)
 	}
 }
-
+// Handler per la gestione della ricerca dei file in base al titolo e all'autore
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	queryText := r.URL.Query().Get("query")
 	author := r.URL.Query().Get("user")
@@ -235,7 +235,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
-
+// Handler per la visualizzazione di tutti i file di un utente
 func searchAllHandler(w http.ResponseWriter, r *http.Request) {
 	author := r.URL.Query().Get("user")
 	// Esegue la query sul database
@@ -257,7 +257,7 @@ func searchAllHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(results)
 }
-
+// Handler per la gestione del download dei file
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
 	author := r.URL.Query().Get("user")
@@ -270,8 +270,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment; filename="+filePath)
 	http.ServeFile(w, r, filePath)
 }
-
-// Funzione per eliminare un file da files, relative analitics (se non ci sono altri file con lo stesso hash) e il file fisico da /uploads
+// Funzione per eliminare un file dalla tabella files, la tabella analitics (se non ci sono altri file con lo stesso hash) e il file fisico da /uploads
 func Delete(fileHash string, author string) error {
 	var filePath string
 	fmt.Printf("Elimazione file %s di %s\n", fileHash, author)
@@ -301,6 +300,7 @@ func Delete(fileHash string, author string) error {
 	// Se siamo qui tutto è andato a buon fine e ritorniamo nil (nessun errore)
 	return nil
 }
+// Handler per la gestione dell'eliminazione dei file
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	fileHash := r.URL.Query().Get("hash")
 	author := r.URL.Query().Get("user")
@@ -319,7 +319,7 @@ func hashString(input string) string {
 	h.Write([]byte(input))
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
-
+// Handler per la gestione della registrazione degli utenti
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -340,6 +340,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprint(w, token)
 }
+// Handler per la gestione del login degli utenti
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -356,25 +357,28 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	token := fmt.Sprintf("%s-%d", req.Username, time.Now().Unix())
 	fmt.Fprint(w, token)
 }
-
+// Handler per la gestione dell'eliminazione degli utenti e di tutti i loro file
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	author := r.URL.Query().Get("user")
 	if author == "" {
 		http.Error(w, "Parametro 'user' mancante", http.StatusBadRequest)
 		return
 	}
-	//Conservo gli hash dei file da eliminare in un array per poi eliminarli uno ad uno con la funzione Delete che si occupa di eliminare anche gli analitics associati se non ci sono altri file con lo stesso hash
-	var fileToDelete []string
+	//Conservo gli hash dei file da eliminare in un array per poi eliminarli uno ad uno con la funzione Delete 
+	//In questo modo elimina anche gli analitics associati se non ci sono altri file con lo stesso hash
+	var fileToDelete []string // array di stringhe per conservare gli hash dei file da eliminare
 	rows, err := db.Query("SELECT hash FROM files WHERE author = ?", author)
 	if err == nil {
 		for rows.Next() {
+			// Per ogni file dell'utente prendo l'hash e lo aggiungo all'array fileToDelete
 			var h string
-			if err := rows.Scan(&h); err == nil {
+			if err := rows.Scan(&h); err == nil { // Scansiona la riga e assegna l'hash alla variabile h
 				fileToDelete = append(fileToDelete, h)
 			}
     	}
     	rows.Close()
 	}
+	// Elimino tutti i file usando Delete
 	for _, hash := range fileToDelete {
 		Delete(hash, author)
 	}
@@ -386,6 +390,7 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "Account e dati di '%s' rimossi correttamente", author)
 }
+// Handler per la gestione dell'upload degli analitics
 func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Metodo non consentito", http.StatusMethodNotAllowed)
@@ -409,7 +414,7 @@ func uploadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("Dati salvati correttamente nel database")
 }
-
+// Handler per la gestione del download degli analitics
 func downloadAnaliticsHandler(w http.ResponseWriter, r *http.Request) {
 	hash := r.URL.Query().Get("hash")
 	var analitics Analitics

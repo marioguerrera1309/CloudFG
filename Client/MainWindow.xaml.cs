@@ -17,6 +17,7 @@ namespace CloudFG
             this.username = username;
             lblWelcome.Text = "Benvenuto, " + username;
         }
+        // Metodo per gestire il click del pulsante "Invia"
         private async void BtnSendClick(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -28,12 +29,13 @@ namespace CloudFG
                 {
                     string title = detailsWin.DocumentTitle;
                     string author = username;
-                    //Assegna al label il nome del file selezionato<
+                    //Assegna al label il nome del file selezionato
                     lblFileName.Text = Path.GetFileName(filePath);
                     await UploadFile(filePath, title, author);
                 }
             }
         }
+        // Metodo per caricare il file selezionato sul server
         private async Task UploadFile(string filePath, string title, string author)
         {
             btnSend.IsEnabled = false;
@@ -41,10 +43,11 @@ namespace CloudFG
             uploadProgressBar.IsIndeterminate = true;
             lblStatus.Text = "Caricamento in corso...";
             try {
+                // Crea un form http per inviare il file e i metadati al server
                 using var form = new MultipartFormDataContent();
                 using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 using var streamContent = new StreamContent(fileStream);
-                //Aggiunge il file al contenuto del form
+                // Aggiunge il file e i metadati al form
                 form.Add(new StringContent(title), "title");
                 form.Add(new StringContent(author), "author");
                 form.Add(streamContent, "file", Path.GetFileName(filePath));
@@ -71,6 +74,7 @@ namespace CloudFG
                 uploadProgressBar.Visibility = Visibility.Hidden;
             }
         }
+        // Questo metodo viene chiamato quando il TextBox per la ricerca "lblSearch" viene cliccato, se il testo è quello di default lo svuota e cambia il colore del testo da grigio a nero
         private void RemoveText(object sender, RoutedEventArgs e)
         {
             if (lblSearch.Text == "Inserisci un titolo") {
@@ -78,6 +82,8 @@ namespace CloudFG
                 lblSearch.Foreground = System.Windows.Media.Brushes.Black;
             }
         }
+        // Metodo per gestire il click del pulsante "Cerca"
+        // Apre una nuova SearchWindow con i risultati della ricerca posizionandola in modo da non sovrapporsi completamente alla finestra precedente
         private void BtnSearchClick(object sender, RoutedEventArgs e)
         {
             string query = lblSearch.Text;
@@ -99,16 +105,19 @@ namespace CloudFG
             //La finestra verrà mostrata dopo aver ricevuto la risposta se non è vuota
             //searchWin.Show();
         }
+        // Il metodo viene chiamato quando la finestra principale viene chiusa
+        // Definendo il metodo WindowClosed quando si apre la LoginWindow dopo il logout possiamo rimuoverlo e chiudendo la MainWindow non si chiude l'intera applicazione
         private void WindowClosed(object sender, EventArgs e)
         {
             Application.Current.Shutdown();
         }
+        // Metodo per gestire il click del pulsante "Logout"
         private void BtnLogoutClick(object sender, RoutedEventArgs e)
         {
             // Rimuove il token salvato
             CloudFG.Properties.Settings.Default.UserToken = string.Empty;
             CloudFG.Properties.Settings.Default.Save();
-            // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
+            // Rimuove l'evento di chiusura alla MainWindow per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
             this.Closed -= WindowClosed;
             // Apre la LoginWindow
             LoginWindow loginWin = new LoginWindow();
@@ -116,7 +125,7 @@ namespace CloudFG
             // Chiude la MainWindow
             this.Close();
         }
-
+        // Metodo per gestire il click del pulsante "Elimina Account"
         private async void BtnDeleteAccountClick(object sender, RoutedEventArgs e)
         {   
             var conferma = MessageBox.Show($"Sei sicuro di voler eliminare '{username}'?", "Conferma", MessageBoxButton.YesNo);
@@ -129,7 +138,7 @@ namespace CloudFG
                         // Rimuove il token salvato
                         CloudFG.Properties.Settings.Default.UserToken = string.Empty;
                         CloudFG.Properties.Settings.Default.Save();
-                        // Rimuove l'evento di chiusura per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
+                        // Rimuove l'evento di chiusura alla MainWindow per evitare che chiuda l'intera applicazione quando chiudiamo la MainWindow per aprire la LoginWindow
                         this.Closed -= WindowClosed;
                         // Apre la LoginWindow
                         LoginWindow loginWin = new LoginWindow();
@@ -140,9 +149,9 @@ namespace CloudFG
                 } catch (Exception ex) {
                     MessageBox.Show($"Errore: {ex.Message}");
                 }
-            }
-            
+            }   
         }
+        // Metodo per gestire il click del pulsante "Visualizza tutti"
         private void BtnAllClick(object sender, RoutedEventArgs e)
         {
             SearchWindow searchWin = new SearchWindow("", username); // Passa una stringa vuota per visualizzare tutti i documenti

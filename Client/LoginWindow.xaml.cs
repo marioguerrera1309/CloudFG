@@ -25,6 +25,7 @@ namespace CloudFG
             var data = new { Username = txtUserReg.Text, Password = txtPassReg.Password };
             await InviaRichiestaAuth("http://localhost:8080/register", data);
         }
+        // Metodo per inviare le richieste di autenticazione (login/registrazione)
         private async Task InviaRichiestaAuth(string url, object data)
         {
             string username = "";
@@ -40,17 +41,14 @@ namespace CloudFG
                     CloudFG.Properties.Settings.Default.UserToken = token;
                     CloudFG.Properties.Settings.Default.Save();
                     // Apre MainWindow e chiude LoginWindow
-                    try
-                    {
-                        string[] partialToken = token.Split('-');
-                        username = partialToken[0];
-                        string timestampStr = partialToken[1];
-                    }
-                    catch { }
+                    string[] partialToken = token.Split('-');
+                    username = partialToken[0];
+                    string timestampStr = partialToken[1];
+                    //MessageBox.Show("Autenticazione avvenuta con successo!", "Successo", MessageBoxButton.OK, MessageBoxImage.Information);
                     new MainWindow(username).Show();
                     this.Close();
                 }
-                else{
+                else {
                     string errorMessage = await response.Content.ReadAsStringAsync();
                     if (string.IsNullOrEmpty(errorMessage)) errorMessage = "Errore sconosciuto";
                     MessageBox.Show(errorMessage, "Errore Login", MessageBoxButton.OK, MessageBoxImage.Error);

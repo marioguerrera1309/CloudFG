@@ -48,6 +48,7 @@ namespace CloudFG
                 MessageBox.Show("Errore durante la ricerca: " + ex.Message);
             }
         }
+        // Metodo per aprire il file selezionato quando si clicca sul pulsante "Visualizza"
         private async void BtnResultClick(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -80,6 +81,7 @@ namespace CloudFG
                 MessageBox.Show($"Errore nel download: {ex.Message}");
             }
         }
+        // Metodo per eliminare il file selezionato quando si clicca sul pulsante "Elimina"
         private async void BtnDeleteResultClick(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -101,6 +103,7 @@ namespace CloudFG
                 }
             }
         }
+        // Metodo per visualizzare le analisi del documento selezionato quando si clicca sul pulsante "Visualizza analisi"
         private async void BtnViewAnaliticsClick(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
