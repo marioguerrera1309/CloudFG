@@ -1,8 +1,7 @@
-﻿using Microsoft.Win32;//libreria per aprire la finestra per selezionare il file
-using System.IO;
-using System.Net.Http;
-using System.Runtime.CompilerServices;
-using System.Windows;
+﻿using Microsoft.Win32;// Libreria per aprire la finestra per selezionare il file
+using System.IO; // Libreria per gestire i file
+using System.Net.Http; // Libreria per inviare richieste HTTP al server
+using System.Windows;// Libreria per gestire le finestre
 namespace CloudFG
 {
     public partial class MainWindow : Window

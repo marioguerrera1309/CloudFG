@@ -1,6 +1,6 @@
 ﻿using System.Net.Http;
-using System.Text;
-using System.Text.Json;
+using System.Text; // Libreria per codificare i dati in JSON da inviare al server
+using System.Text.Json; // Libreria per serializzare e deserializzare oggetti in JSON
 using System.Windows;
 namespace CloudFG
 {

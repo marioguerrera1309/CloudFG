@@ -36,6 +36,8 @@ namespace CloudFG
                     var risultati = JsonSerializer.Deserialize<List<Document>>(json);
                     if (risultati != null)
                     {
+                        // ItemSource prende un IEnumerable (come List) e lo usa per creare la lista di risultati
+                        // usando il DataTemplate definito in XAML per visualizzare le proprietà di ogni oggetto.
                         lstResults.ItemsSource = risultati;
                         this.Show();
                     } else {
@@ -51,9 +53,11 @@ namespace CloudFG
         // Metodo per aprire il file selezionato quando si clicca sul pulsante "Visualizza"
         private async void BtnResultClick(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
+            // Ottiene il documento associato al pulsante cliccato usando DataContext
+            var button = sender as Button; // Il pulsante è il sender dell'evento e lo convertiamo a Button
             if(button == null) return;
-            var libro = button.DataContext as Document;
+            var libro = button.DataContext as Document; 
+            // Il button non ha un DataContext ma lo eredita
             if(libro == null) return;
             MessageBox.Show($"Hai scelto: {libro.Title}. Avvio download...");
             try {
