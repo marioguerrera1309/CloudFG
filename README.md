@@ -1,4 +1,4 @@
-Requisiti Fondamentali
+Requisiti:
 
 Scaricare .NET SDK 10.0.102: https://dotnet.microsoft.com/it-it/download
 
@@ -14,7 +14,7 @@ Assicurarsi di essere nella directory ...\CloudFG\ ed eseguire:
 ./Start.ps1
 ```
 ___
-Compilazione e avvio manuale del progetto
+Alternativamente all' avvio automatico è possibile effettuare la compilazione e avvio manuale del progetto
 
 1. Per compilare ed eseguire il Server:
 
